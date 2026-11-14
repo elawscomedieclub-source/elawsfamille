@@ -1,0 +1,2521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Application de la famille : annuaire, anniversaires, calendrier et cotisations.">
+    <link rel="apple-touch-icon" href="icon.png">
+    <title>Notre Belle Famille – Joie, Paix & Union</title>
+    <!-- Lien vers le Manifest pour l'installation automatique en APK/PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#166534">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: linear-gradient(180deg, #fefce8 0%, #f0fdf4 100%);
+            color: #3f3f46;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- LAYOUT PRINCIPAL --- */
+        .app-layout {
+            display: flex;
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Barre latérale – verts chauds & accueillants */
+        .pc-sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #14532d 0%, #166534 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #15803d;
+            box-shadow: 4px 0 20px rgba(22, 101, 52, 0.15);
+        }
+        .pc-sidebar-header {
+            padding: 22px 20px;
+            font-size: 1.15rem;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            background: rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.3px;
+        }
+        .pc-sidebar-header::before {
+            content: "👨‍👩‍👧‍👦";
+            font-size: 1.4rem;
+        }
+        .pc-nav-list {
+            padding: 18px 14px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .pc-nav-item {
+            padding: 13px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+            color: #bbf7d0;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pc-nav-item:hover {
+            background: rgba(255,255,255,0.12);
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+        .pc-nav-item.active {
+            background: #fef08a;
+            color: #14532d;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(254, 240, 138, 0.35);
+        }
+
+        /* Contenu principal */
+        .pc-main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #fffbeb 0%, #f0fdf4 40%, #ecfdf5 100%);
+            overflow-y: auto;
+            position: relative;
+            padding-bottom: 80px;
+        }
+
+        header {
+            background: linear-gradient(90deg, #ffffff 0%, #fefce8 100%);
+            color: #14532d;
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #bbf7d0;
+            box-shadow: 0 2px 12px rgba(22, 101, 52, 0.06);
+        }
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        header h1::before {
+            content: "🏡";
+            font-size: 1.35rem;
+        }
+
+        .menu-btn-mobile {
+            display: none;
+            font-size: 1.6rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #166534;
+        }
+
+        /* Vues */
+        .view {
+            display: none;
+            padding: 28px 32px;
+            animation: fadeIn 0.35s ease;
+        }
+        .view.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Bandeau défilant – joie & paix */
+        .ticker-container {
+            background: linear-gradient(90deg, #fef9c3, #dcfce7, #fef9c3);
+            border-bottom: 1px solid #86efac;
+            color: #166534;
+            padding: 11px 28px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .ticker-text {
+            display: inline-block;
+            animation: defiler 22s linear infinite;
+        }
+        @keyframes defiler {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Bandeau installation */
+        #installBanner {
+            display: none;
+            background: linear-gradient(90deg, #16a34a, #15803d);
+            color: white;
+            padding: 13px 20px;
+            text-align: center;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 3px 12px rgba(22, 163, 74, 0.3);
+        }
+        #installBanner:hover {
+            background: linear-gradient(90deg, #15803d, #166534);
+        }
+
+        /* Bouton messages flottant – cœur & joie */
+        .bottom-envelope-bar {
+            position: fixed;
+            bottom: 22px;
+            right: 28px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: white;
+            padding: 13px 22px;
+            border-radius: 50px;
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            z-index: 999;
+            transition: all 0.25s ease;
+        }
+        .bottom-envelope-bar:hover {
+            background: linear-gradient(135deg, #15803d, #14532d);
+            transform: scale(1.06) translateY(-2px);
+            box-shadow: 0 8px 25px rgba(22, 163, 74, 0.5);
+        }
+        .envelope-badge {
+            background: #f43f5e;
+            color: white;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+
+        /* Cartes de stats – douceur & chaleur */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #bbf7d0;
+            padding: 22px;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(22, 101, 52, 0.07);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 22px rgba(22, 101, 52, 0.12);
+        }
+        .stat-card h3 {
+            font-size: 1.7rem;
+            color: #166534;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+        .stat-card span {
+            font-size: 0.82rem;
+            color: #4d7c0f;
+            font-weight: 500;
+        }
+
+        /* Cartes d’historique / messages */
+        .history-card {
+            background: #ffffff;
+            border: 1px solid #d9f99d;
+            border-left: 6px solid #22c55e;
+            padding: 20px 22px;
+            border-radius: 0 14px 14px 0;
+            margin-bottom: 16px;
+            box-shadow: 0 3px 12px rgba(34, 197, 94, 0.08);
+        }
+        .history-card.green {
+            border-left-color: #16a34a;
+            background: linear-gradient(90deg, #f0fdf4, #ffffff);
+        }
+        .history-card h4 {
+            font-size: 1.05rem;
+            color: #14532d;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        .history-card p {
+            font-size: 0.92rem;
+            color: #3f6212;
+            line-height: 1.55;
+        }
+        .history-date {
+            font-size: 0.78rem;
+            color: #65a30d;
+            margin-top: 12px;
+            display: block;
+            font-weight: 500;
+        }
+
+        /* Formulaires */
+        .form-group {
+            margin-bottom: 18px;
+            max-width: 520px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 7px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #bbf7d0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            background: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+        }
+
+        /* Boutons – chaleureux & arrondis */
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            padding: 13px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+            transition: all 0.25s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
+        }
+
+        /* Messages vocaux */
+        .voice-item {
+            background: #ffffff;
+            border: 1px solid #bbf7d0;
+            padding: 18px 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            max-width: 620px;
+            box-shadow: 0 3px 12px rgba(22, 101, 52, 0.06);
+        }
+        .play-btn {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            box-shadow: 0 3px 10px rgba(34, 197, 94, 0.35);
+            transition: transform 0.2s;
+        }
+        .play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* ===== BANDEAU ANNIVERSAIRE ANIMÉ ===== */
+        .birthday-banner {
+            background: linear-gradient(90deg, #fce7f3, #fef3c7, #dcfce7, #fce7f3);
+            border: 2px solid #f9a8d4;
+            border-radius: 16px;
+            padding: 12px 0;
+            overflow: hidden;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 15px rgba(244, 114, 182, 0.2);
+        }
+        .birthday-banner-inner {
+            display: inline-block;
+            white-space: nowrap;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #9d174d;
+            animation: birthdayScroll 18s linear infinite;
+            padding-left: 100%;
+        }
+        @keyframes birthdayScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* ===== CARTES ANNIVERSAIRES (défilement horizontal) ===== */
+        .birthday-scroll {
+            display: flex;
+            gap: 14px;
+            overflow-x: auto;
+            padding: 8px 4px 16px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .birthday-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        .birthday-scroll::-webkit-scrollbar-thumb {
+            background: #86efac;
+            border-radius: 10px;
+        }
+        .birthday-card {
+            flex: 0 0 160px;
+            background: #ffffff;
+            border: 2px solid #bbf7d0;
+            border-radius: 18px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            scroll-snap-align: start;
+            transition: all 0.25s ease;
+            box-shadow: 0 3px 12px rgba(22, 101, 52, 0.08);
+        }
+        .birthday-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 8px 22px rgba(22, 101, 52, 0.15);
+            border-color: #22c55e;
+        }
+        .birthday-card.today {
+            border-color: #f472b6;
+            background: linear-gradient(180deg, #fdf2f8, #ffffff);
+            box-shadow: 0 4px 18px rgba(244, 114, 182, 0.25);
+            animation: pulseToday 2s ease-in-out infinite;
+        }
+        @keyframes pulseToday {
+            0%, 100% { box-shadow: 0 4px 18px rgba(244, 114, 182, 0.25); }
+            50% { box-shadow: 0 6px 25px rgba(244, 114, 182, 0.45); }
+        }
+        .bday-photo {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.15rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+        }
+        .bday-info strong {
+            display: block;
+            font-size: 0.9rem;
+            color: #14532d;
+            margin-bottom: 3px;
+        }
+        .bday-date {
+            font-size: 0.75rem;
+            color: #65a30d;
+            font-weight: 500;
+        }
+        .bday-wish {
+            margin-top: 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #db2777;
+            background: #fce7f3;
+            padding: 3px 8px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* ===== GRILLE DES PROFILS MEMBRES ===== */
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 18px;
+        }
+        .member-card {
+            background: #ffffff;
+            border: 2px solid #bbf7d0;
+            border-radius: 18px;
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 3px 12px rgba(22, 101, 52, 0.07);
+        }
+        .member-card:hover {
+            transform: translateY(-4px);
+            border-color: #22c55e;
+            box-shadow: 0 8px 22px rgba(22, 101, 52, 0.14);
+        }
+        .member-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 1.3rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .member-card h4 {
+            font-size: 1.05rem;
+            color: #14532d;
+            margin-bottom: 4px;
+        }
+        .member-role {
+            font-size: 0.82rem;
+            color: #4d7c0f;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .member-meta {
+            font-size: 0.78rem;
+            color: #65a30d;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .member-badge {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+        }
+
+        /* Modal profil */
+        .profil-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(20, 83, 45, 0.45);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.25s ease;
+        }
+        .profil-modal-content {
+            background: #ffffff;
+            border-radius: 22px;
+            padding: 28px 24px;
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            border: 2px solid #bbf7d0;
+        }
+        .profil-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: #f0fdf4;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #166534;
+            font-weight: 700;
+        }
+        .profil-close:hover {
+            background: #dcfce7;
+        }
+
+        /* ===== SERVICES / TALENTS (défilement horizontal) ===== */
+        .services-ticker {
+            background: #ffffff;
+            border: 2px solid #bbf7d0;
+            border-radius: 16px;
+            overflow: hidden;
+            padding: 14px 0;
+            box-shadow: 0 3px 12px rgba(22, 101, 52, 0.07);
+        }
+        .services-track {
+            display: flex;
+            gap: 24px;
+            width: max-content;
+            animation: servicesScroll 40s linear infinite;
+        }
+        .services-track:hover {
+            animation-play-state: paused;
+        }
+        @keyframes servicesScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .service-item {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 1px solid #86efac;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-size: 0.88rem;
+            color: #14532d;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(22, 101, 52, 0.06);
+        }
+        .service-item strong {
+            color: #166534;
+        }
+
+        /* ===== MODE SOMBRE ===== */
+        body.dark-mode {
+            background: linear-gradient(180deg, #0f172a 0%, #14532d 100%);
+            color: #e2e8f0;
+        }
+        body.dark-mode .pc-main-content {
+            background: linear-gradient(180deg, #0f172a 0%, #1a2e1a 100%);
+        }
+        body.dark-mode header {
+            background: linear-gradient(90deg, #1e293b 0%, #14532d 100%);
+            color: #bbf7d0;
+            border-bottom-color: #166534;
+        }
+        body.dark-mode .stat-card,
+        body.dark-mode .history-card,
+        body.dark-mode .voice-item,
+        body.dark-mode .member-card,
+        body.dark-mode .birthday-card,
+        body.dark-mode .services-ticker,
+        body.dark-mode .profil-modal-content,
+        body.dark-mode #addMemberForm {
+            background: #1e293b !important;
+            border-color: #166534 !important;
+            color: #e2e8f0;
+        }
+        body.dark-mode .history-card.green {
+            background: linear-gradient(90deg, #14532d, #1e293b) !important;
+        }
+        body.dark-mode .stat-card h3,
+        body.dark-mode .member-card h4,
+        body.dark-mode .history-card h4,
+        body.dark-mode .bday-info strong {
+            color: #bbf7d0 !important;
+        }
+        body.dark-mode .form-group label,
+        body.dark-mode .member-role,
+        body.dark-mode .bday-date,
+        body.dark-mode .history-card p {
+            color: #86efac !important;
+        }
+        body.dark-mode .form-group input,
+        body.dark-mode .form-group textarea {
+            background: #0f172a;
+            border-color: #166534;
+            color: #e2e8f0;
+        }
+        body.dark-mode .ticker-container {
+            background: linear-gradient(90deg, #14532d, #1e293b, #14532d);
+            color: #bbf7d0;
+            border-color: #166534;
+        }
+        body.dark-mode .birthday-banner {
+            background: linear-gradient(90deg, #4c1d95, #14532d, #9d174d);
+            border-color: #a78bfa;
+        }
+        body.dark-mode .birthday-banner-inner {
+            color: #fce7f3;
+        }
+        body.dark-mode .event-card {
+            background: #1e293b;
+            border-color: #166534;
+        }
+
+        /* Cartes événements */
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-width: 640px;
+        }
+        .event-card {
+            background: #ffffff;
+            border: 2px solid #bbf7d0;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 3px 12px rgba(22, 101, 52, 0.07);
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+        .event-date-badge {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border-radius: 12px;
+            padding: 10px 12px;
+            text-align: center;
+            min-width: 64px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .event-date-badge .jour {
+            font-size: 1.4rem;
+            display: block;
+            line-height: 1.1;
+        }
+        .event-date-badge .mois {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+        .event-info h4 {
+            color: #14532d;
+            margin-bottom: 4px;
+            font-size: 1.05rem;
+        }
+        .event-info p {
+            font-size: 0.88rem;
+            color: #4d7c0f;
+            line-height: 1.45;
+        }
+        .event-tag {
+            display: inline-block;
+            background: #dcfce7;
+            color: #166534;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 20px;
+            margin-top: 6px;
+        }
+
+        /* Historique cotisations */
+        .cotisation-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #dcfce7;
+            font-size: 0.9rem;
+        }
+        .cotisation-row:last-child { border-bottom: none; }
+
+        /* --- MOBILE --- */
+        @media (max-width: 768px) {
+            .app-layout {
+                flex-direction: column;
+            }
+            .pc-sidebar {
+                position: fixed;
+                left: -280px;
+                height: 100%;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+            .pc-sidebar.mobile-active {
+                left: 0;
+            }
+            .menu-btn-mobile {
+                display: block;
+            }
+            .pc-main-content {
+                width: 100vw;
+                height: 100dvh;
+            }
+            .bottom-envelope-bar {
+                bottom: 16px;
+                right: 16px;
+                padding: 11px 16px;
+                font-size: 0.88rem;
+            }
+            .view {
+                padding: 20px 18px;
+            }
+            .birthday-card {
+                flex: 0 0 140px;
+            }
+        }
+        #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#14532d;color:#fff;padding:12px 20px;border-radius:14px;font-size:.9rem;white-space:pre-line;max-width:90vw;opacity:0;pointer-events:none;transition:.3s;z-index:5000;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+        #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        :focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+        @media (max-width: 768px) {
+            header { padding: 10px 14px !important; gap: 8px; }
+            header h1 { font-size: 1rem !important; line-height: 1.25; flex: 1; min-width: 0; }
+            header h1::before { display: none; }
+            #userRoleDisplay { font-size: .72rem !important; max-width: 90px; text-align: right; }
+            .stats-grid { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+            .stats-grid .stat-card { padding: 14px !important; }
+            .stats-grid .stat-card h3 { font-size: 1.35rem !important; }
+            .view { padding-bottom: 110px !important; }
+        }
+        .reponse-ligne { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .reponse-ligne input { flex: 1 1 160px; min-width: 0; }
+        @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+        body.dark-mode .pc-main-content :is(h2,h3,h4,strong,p,span,label,em,div):not(.member-badge):not(.bday-wish):not(.event-tag):not(.event-date-badge):not(.jour):not(.mois):not(.bday-photo):not(.member-avatar):not(.envelope-badge){color:#d1fae5 !important}
+        body.dark-mode .pc-main-content [style*="#fff"],body.dark-mode .pc-main-content [style*="#f0fdf4"],body.dark-mode .pc-main-content [style*="#fffbeb"],body.dark-mode .pc-main-content [style*="#f5f3ff"]{background:#1e293b !important}
+        body.dark-mode input,body.dark-mode textarea,body.dark-mode select{background:#0f172a !important;color:#e2e8f0 !important;border-color:#166534 !important}
+        body.dark-mode .profil-modal-content *{color:#d1fae5}
+        body.dark-mode .member-badge{background:#14532d;color:#bbf7d0}
+        body.dark-mode .service-item{background:#14532d;color:#d1fae5;border-color:#166534}
+    </style>
+</head>
+<body onload="verifierAccesAdmin()">
+    <noscript><p style="padding:20px;font-family:sans-serif">Cette application a besoin de JavaScript. Veuillez l’activer dans votre navigateur.</p></noscript>
+
+    <!-- BANDEAU D'INSTALLATION AUTOMATIQUE -->
+    <div id="installBanner" onclick="installerApp()">
+        🏡 Installer « Notre Belle Famille » sur votre écran d’accueil
+    </div>
+
+    <div class="app-layout">
+        <!-- ================= BARRE LATÉRALE ================= -->
+        <div class="pc-sidebar" id="pcSidebar">
+            <div class="pc-sidebar-header" id="sidebarTitle" title="Cliquer pour modifier le nom de la famille" onclick="ouvrirModifNomFamille()" style="cursor:pointer;">
+                Notre Belle Famille
+            </div>
+            <div class="pc-nav-list">
+                <div style="font-size: 0.7rem; text-transform: uppercase; color: #86efac; font-weight: bold; margin: 10px 0 5px 5px;">Ensemble</div>
+                <div class="pc-nav-item active" onclick="switchView('homeView', this)">🏡 Accueil & Joie</div>
+                <div class="pc-nav-item" onclick="switchView('voicesView', this)">💌 Messages & Échanges</div>
+                <div class="pc-nav-item" onclick="switchView('publierVoiceView', this)">🎙️ Partager un Vocal</div>
+                <div class="pc-nav-item" onclick="switchView('annuaireView', this)">👨‍👩‍👧‍👦 Annuaire Familial</div>
+                <div class="pc-nav-item" onclick="switchView('calendrierView', this)">📅 Calendrier & Événements</div>
+                <div class="pc-nav-item" onclick="switchView('visioView', this)">📹 Réunion vidéo</div>
+                <div class="pc-nav-item" onclick="switchView('sondagesView', this)">🗳️ Sondages</div>
+
+                <div style="font-size: 0.7rem; text-transform: uppercase; color: #86efac; font-weight: bold; margin: 15px 0 5px 5px;">Mon Espace</div>
+                <div class="pc-nav-item" onclick="switchView('loginView', this)">🔑 Connexion</div>
+                <div class="pc-nav-item" onclick="switchView('espaceMembreView', this)">💖 Mon Profil</div>
+                <div class="pc-nav-item" onclick="switchView('parametresView', this)">⚙️ Paramètres</div>
+                <div class="pc-nav-item" onclick="switchView('aideView', this)">❓ Guide d’utilisation</div>
+                <div class="pc-nav-item" id="navLogout" style="display:none" onclick="deconnecter()">🚪 Déconnexion</div>
+
+                <div style="font-size: 0.7rem; text-transform: uppercase; color: #86efac; font-weight: bold; margin: 15px 0 5px 5px;">Bureau de la Famille</div>
+                <div class="pc-nav-item" onclick="switchView('secretaireView', this)">📝 Secrétaire</div>
+                <div class="pc-nav-item" onclick="switchView('tresorierView', this)">💰 Trésorier</div>
+                <div class="pc-nav-item" onclick="switchView('presidentView', this)">👑 Président</div>
+                <div class="pc-nav-item" onclick="switchView('approbationsView', this)">🛡️ Validations du bureau</div>
+            </div>
+        </div>
+
+        <!-- ================= CONTENU PRINCIPAL ================= -->
+        <div class="pc-main-content">
+            <header>
+                <button class="menu-btn-mobile" aria-label="Ouvrir le menu" onclick="toggleMobileMenu()">☰</button>
+                <h1 id="appTitle">Maison de la Famille – Joie & Union</h1>
+                <span style="font-size: 0.85rem; color: #166534; font-weight: 600;" id="userRoleDisplay">Mode Public 🌿</span>
+            </header>
+
+            <!-- Bandeau Défilant -->
+            <div class="ticker-container">
+                <div class="ticker-text">
+                    ❤️ Bienvenue dans notre belle famille ! • 🕊️ Paix, amour et fraternité entre nous • 👨‍👩‍👧‍👦 Réunion familiale ce dimanche • 💌 Cliquez sur le bouton en bas pour partager un message d’amour • 🌿 Ensemble nous sommes plus forts
+                </div>
+            </div>
+
+            <!-- ================= 1. ACCUEIL ================= -->
+            <div id="homeView" class="view active">
+                <div id="rappelsAccueil"></div>
+                <p id="salutation" style="font-size:1.05rem;font-weight:600;color:#14532d;margin-bottom:14px"></p>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3 id="statMembres">0</h3>
+                        <span>❤️ Membres unis</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="statCaisse">0 F</h3>
+                        <span>🌿 Solde de la caisse</span>
+                    </div>
+                </div>
+
+                <!-- ===== BANDEAU JOYEUX ANNIVERSAIRE (généré automatiquement) ===== -->
+                <div class="birthday-banner" id="birthdayBanner" style="display:none;">
+                    <div class="birthday-banner-inner" id="birthdayBannerText"></div>
+                </div>
+
+                <!-- ===== ANNIVERSAIRES DES MEMBRES (automatiques) ===== -->
+                <h3 style="font-size: 1.15rem; margin: 22px 0 14px; color: #14532d; display:flex; align-items:center; gap:8px;">
+                    🎂 Anniversaires de notre belle famille
+                </h3>
+                <p style="font-size: 0.88rem; color: #4d7c0f; margin-bottom: 14px;" id="birthdaySubtitle">Les anniversaires sont calculés automatiquement à partir des profils des membres.</p>
+
+                <div class="birthday-scroll" id="birthdayScroll">
+                    <!-- Rempli automatiquement par JavaScript -->
+                </div>
+
+                <h3 style="font-size: 1.15rem; margin: 28px 0 14px; color: #14532d; display:flex; align-items:center; gap:8px;">
+                    🎉 Moments de joie & nouvelles de la famille
+                </h3>
+                
+                <div class="history-card green">
+                    <h4>📊 Bilan de novembre – Nous avançons ensemble</h4>
+                    <p id="bilanTexte">Merci à chacun pour sa contribution d’amour et de solidarité.</p>
+                    <span class="history-date">Publié avec ❤️ par le Trésorier & le Secrétaire</span>
+                </div>
+                <div id="annoncesAccueil"></div>
+
+                <!-- ===== SERVICES & TALENTS DES MEMBRES (défilement) ===== -->
+                <h3 style="font-size: 1.15rem; margin: 28px 0 10px; color: #14532d; display:flex; align-items:center; gap:8px;">
+                    🛠️ Services & talents de la famille
+                </h3>
+                <p style="font-size: 0.88rem; color: #4d7c0f; margin-bottom: 12px;">Besoin d’un service ? Contactez directement le membre concerné.</p>
+
+                <div class="services-ticker">
+                    <div class="services-track" id="servicesTrack">
+                        <!-- Rempli automatiquement à partir des profils -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 2. MESSAGES VOCAUX & DISCUSSIONS ================= -->
+            <div id="voicesView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 6px; color: #14532d;">💌 Espace des messages & d’amour</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 22px;">Écoutez les vocaux, partagez vos pensées et renforcez les liens de fraternité.</p>
+                <div id="listeMessages"></div>
+            </div>
+
+            <div id="publierVoiceView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 16px; color: #14532d;">🎙️ Partager un message d’amour</h2>
+                <div style="text-align:center; padding:28px; background:#fff; border:2px dashed #86efac; border-radius:18px; margin-bottom:18px; max-width:500px;">
+                    <button id="btnRec" aria-label="Enregistrer un vocal" onclick="basculerEnregistrement()" style="background:linear-gradient(135deg,#f43f5e,#e11d48);color:#fff;border:none;width:68px;height:68px;border-radius:50%;font-size:1.6rem;cursor:pointer;margin-bottom:12px">🎙️</button>
+                    <p id="recEtat" style="font-size:0.9rem;color:#4d7c0f;font-weight:500;">Appuyez pour enregistrer un vocal (3 min max)</p>
+                    <audio id="apercu" controls hidden style="margin-top:12px;max-width:100%"></audio>
+                </div>
+                <div class="form-group">
+                    <label for="texteMessage">Ou écrivez un message</label>
+                    <textarea id="texteMessage" rows="3" placeholder="Votre message pour la famille..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="partagerMessage()">Partager avec la famille</button>
+            </div>
+
+            <div id="visioView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 6px; color: #14532d;">📹 Réunion en vidéo</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 18px;">Tous les membres connectés peuvent participer, depuis leur téléphone ou leur ordinateur.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+                    <button class="btn-primary" onclick="rejoindreVisio('famille', 'Réunion de famille')">📹 Réunion de famille maintenant</button>
+                </div>
+                <div id="visioEvenements"></div>
+                <div id="visioZone"></div>
+            </div>
+
+            <div id="aideView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 6px; color: #14532d;">❓ Guide d’utilisation</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 18px;">Tout ce qu’il faut savoir pour profiter de l’application en famille.</p>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🔑 Se connecter</summary><p style="margin-top:8px;font-size:.9rem">Écrivez votre nom complet (ou votre fonction : Président, Trésorier, Secrétaire) et choisissez un code secret d’au moins 4 caractères à la première connexion. Vous pouvez le changer dans « Mon Profil ». Code oublié : demandez au bureau de réinitialiser les codes.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🎂 Annuaire et anniversaires</summary><p style="margin-top:8px;font-size:.9rem">Les anniversaires s’écrivent JJ/MM (ex : 15/11). Touchez un membre pour voir son profil, l’appeler ou lui écrire. Les numéros ne sont visibles que pour les personnes connectées. Le bureau ajoute et modifie les membres ; chacun peut modifier son propre profil.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">💌 Messages et vocaux</summary><p style="margin-top:8px;font-size:.9rem">Enregistrez un vocal de 3 minutes au maximum ou écrivez un message, puis partagez-le avec la famille. Chacun peut répondre et supprimer ses propres messages.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">💰 Cotisations</summary><p style="margin-top:8px;font-size:.9rem">Le statut « À jour » repart à zéro chaque mois. Le Trésorier enregistre les cotisations et les dépenses de la caisse. Pour un événement, le bureau peut ouvrir une cotisation avec un collecteur, qui peut afficher ou masquer la liste des Aînés et celle des Jeunes.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">📹 Réunion vidéo</summary><p style="margin-top:8px;font-size:.9rem">Depuis « Réunion vidéo » ou un événement, touchez « Rejoindre ». Seuls les membres connectés entrent. La première personne qui lance la réunion doit se connecter avec un compte Google ou GitHub : elle devient l’animateur.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">📲 Installer l’application</summary><p style="margin-top:8px;font-size:.9rem">Sur Android : touchez « Installer l’application ». Sur iPhone : bouton Partager puis « Sur l’écran d’accueil ». Elle s’ouvre ensuite comme une vraie application, même avec une mauvaise connexion.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🛡️ Erreur de caisse</summary><p style="margin-top:8px;font-size:.9rem">Le Trésorier indique le motif puis touche ↩ à côté de l’opération concernée. L’annulation n’est appliquée qu’après l’accord de 3 membres du bureau (la demande compte comme la première approbation). Chacun vote dans « Validations du bureau ». Le journal garde la trace de tout.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🗳️ Sondages</summary><p style="margin-top:8px;font-size:.9rem">Le bureau publie une question avec 2 à 6 choix. Chaque membre connecté vote une fois et peut changer d’avis tant que le sondage est ouvert. Les résultats s’affichent en pourcentages, sans les noms.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🔒 Vos données</summary><p style="margin-top:8px;font-size:.9rem">Les informations restent sur votre appareil, ou sont partagées entre les membres grâce au code famille. Ne communiquez ce code qu’à la famille. Le bureau peut télécharger une sauvegarde depuis l’espace administrateur.</p></details>
+            </div>
+
+            <div id="approbationsView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 6px; color: #14532d;">🛡️ Validations du bureau</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 18px;">Une opération de caisse ne peut être annulée qu’avec l’accord de 3 membres du bureau. La demande du Trésorier compte comme la première approbation.</p>
+                <div id="listeApprobations" style="max-width:640px"></div>
+            </div>
+
+            <div id="sondagesView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 6px; color: #14532d;">🗳️ Sondages de la famille</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 18px;">Donnez votre avis sur une date, un lieu, un projet… Vous pouvez changer votre vote tant que le sondage est ouvert.</p>
+                <div id="formSondage" class="stat-card" style="display:none;max-width:520px;margin-bottom:22px">
+                    <h4 style="color:#14532d; margin-bottom:12px;">➕ Nouveau sondage</h4>
+                    <div class="form-group"><label for="sondageQ">Question</label><input type="text" id="sondageQ" maxlength="140" placeholder="Ex : Quelle date pour la fête ?"></div>
+                    <div class="form-group"><label for="sondageOpts">Choix (un par ligne, de 2 à 6)</label><textarea id="sondageOpts" rows="4" placeholder="28 décembre&#10;4 janvier"></textarea></div>
+                    <button class="btn-primary" onclick="creerSondage()">Publier le sondage</button>
+                </div>
+                <div id="listeSondages" style="max-width:640px"></div>
+            </div>
+
+            <!-- ================= 4. ANNUAIRE / PROFILS MEMBRES ================= -->
+            <div id="annuaireView" class="view">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:18px;">
+                    <h2 style="font-size: 1.25rem; color: #14532d; margin:0;">👨‍👩‍👧‍👦 Profils des membres de la famille</h2>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn-primary" style="padding:10px 16px; font-size:0.85rem; background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="exporterMembres()">📥 Exporter la liste</button>
+                        <button class="btn-primary" style="padding:10px 16px; font-size:0.85rem;" onclick="editId=null;document.getElementById('addMemberForm').style.display = document.getElementById('addMemberForm').style.display === 'none' ? 'block' : 'none'">
+                            ➕ Ajouter un membre
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recherche -->
+                <div class="form-group" style="max-width:400px; margin-bottom:18px;">
+                    <input type="text" id="searchMembre" placeholder="🔍 Rechercher un membre (nom, rôle, talent...)" oninput="filtrerMembres()" style="border-radius:50px; padding-left:18px;">
+                </div>
+
+                <!-- Formulaire d'ajout (caché par défaut) -->
+                <div id="addMemberForm" style="display:none; background:#ffffff; border:2px solid #bbf7d0; border-radius:18px; padding:22px; margin-bottom:24px; max-width:560px; box-shadow:0 4px 16px rgba(22,101,52,0.08);">
+                    <h3 style="color:#14532d; margin-bottom:14px; font-size:1.05rem;">➕ Nouveau membre de la famille</h3>
+                    <div class="form-group">
+                        <label>Nom complet</label>
+                        <input type="text" id="newNom" placeholder="Ex: Grace HOUNSOU">
+                    </div>
+                    <div class="form-group">
+                        <label>Rôle / Fonction</label>
+                        <input type="text" id="newRole" placeholder="Ex: Membre, Secrétaire adjoint...">
+                    </div>
+                    <div class="form-group">
+                        <label>Date d'anniversaire (jour/mois)</label>
+                        <input type="text" id="newAnniv" placeholder="Ex: 15/11">
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone</label>
+                        <input type="text" id="newTel" placeholder="Ex: 97 00 11 22">
+                    </div>
+                    <div class="form-group">
+                        <label>Talent / Service proposé</label>
+                        <input type="text" id="newService" placeholder="Ex: Couture, jardinage, transport...">
+                    </div>
+                    <div class="form-group">
+                        <label for="newGroupe">Groupe de la famille</label>
+                        <select id="newGroupe"><option value="aines">👴 Aînés</option><option value="jeunes" selected>🧑 Jeunes</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPhotoFile">Photo (depuis votre téléphone)</label>
+                        <input type="file" id="newPhotoFile" accept="image/*" onchange="lirePhoto(this)"><input type="hidden" id="newPhoto">
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button class="btn-primary" onclick="ajouterMembre()">Enregistrer le membre ❤️</button>
+                        <button class="btn-primary" style="background:#94a3b8;" onclick="annulerMembre()">Annuler</button>
+                    </div>
+                </div>
+
+                <!-- Grille des profils -->
+                <div class="members-grid" id="membersGrid">
+                    <!-- Les cartes seront générées par JavaScript -->
+                </div>
+
+                <!-- Panneau de détail du profil (modal simple) -->
+                <div id="profilDetail" class="profil-modal" style="display:none;">
+                    <div class="profil-modal-content">
+                        <button class="profil-close" onclick="fermerProfil()">✕</button>
+                        <div id="profilDetailBody"></div>
+                        <button id="btnModifMembre" class="btn-primary" style="display:none;background:#3b82f6;margin:10px auto 0">✏️ Modifier ce profil</button>
+                        <button id="btnSupprMembre" class="btn-primary" style="display:none;background:#dc2626;margin:10px auto 0;display:none">🗑 Supprimer ce membre</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 5. CONNEXION ================= -->
+            <div id="loginView" class="view">
+                <div id="dejaConnecte" class="history-card" style="display:none;max-width:460px"><h4>✅ Vous êtes connecté</h4><p id="dejaNom"></p><button class="btn-primary" onclick="deconnecter()">Se déconnecter</button></div>
+                <h2 style="font-size: 1.25rem; margin-bottom: 15px; color: #14532d;">🔑 Connexion à la famille</h2>
+                <div class="form-group">
+                    <label>Votre Nom ou Rôle</label>
+                    <input type="text" id="loginNom" placeholder="Ex: Jean KODJO ou Trésorier">
+                </div>
+                <div class="form-group">
+                    <label>Votre Code Secret Personnel</label>
+                    <input type="password" id="loginCode" placeholder="Votre mot de passe spécial">
+                </div>
+                <button class="btn-primary" onclick="connecterUtilisateur()">Se connecter à mon espace</button>
+            </div>
+
+            <!-- ================= 6. ESPACE MEMBRE ================= -->
+            <div id="espaceMembreView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 15px; color: #14532d;" id="titreMembre">💖 Mon carnet familial</h2>
+                
+                <div class="stats-grid" style="margin-bottom:20px;">
+                    <div class="stat-card">
+                        <h3 style="font-size:1.3rem;" id="statCotis">—</h3>
+                        <span id="statCotisLbl">Cotisation du mois</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3 style="font-size:1.3rem;" id="statAnniv">—</h3>
+                        <span>🎂 Mon anniversaire</span>
+                    </div>
+                </div>
+
+                <div class="history-card green" style="max-width:520px; margin-bottom:20px;">
+                    <h4>🛠️ Mon talent / service proposé</h4>
+                    <p id="monService">—</p>
+                </div>
+
+                <div class="stat-card" style="max-width:520px; margin-bottom:20px;">
+                    <h4 style="color:#14532d; margin-bottom:12px;">📜 Historique de mes cotisations</h4>
+                    <div id="histoCotis"></div>
+                    <div class="stat-card" style="max-width:520px; margin-top:22px;">
+                        <h4 style="color:#14532d; margin-bottom:12px;">🔐 Changer mon code secret</h4>
+                        <div class="form-group"><label for="ancienCode">Ancien code</label><input type="password" id="ancienCode" autocomplete="current-password"></div>
+                        <div class="form-group"><label for="nouveauCode">Nouveau code (4 caractères minimum)</label><input type="password" id="nouveauCode" autocomplete="new-password"></div>
+                        <button class="btn-primary" onclick="changerCode()">Modifier mon code</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>💡 Envoyer une suggestion écrite au Président</label>
+                    <textarea id="texteSuggestion" rows="4" placeholder="Votre suggestion d'amour pour la famille..."></textarea>
+                </div>
+                <button class="btn-primary" style="background: linear-gradient(135deg,#f59e0b,#d97706);" onclick="envoyerSuggestionEcrite()">Envoyer au Président ❤️</button>
+            </div>
+
+            <!-- ================= 7. ESPACE PRÉSIDENT ================= -->
+            <div id="presidentView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 15px; color: #14532d;">👑 Espace du Président – Guide de la famille</h2>
+                <div id="listeSuggestions"></div>
+            </div>
+
+            <!-- ================= 8. ESPACE TRÉSORIER ================= -->
+            <div id="tresorierView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 15px; color: #14532d;">💰 Espace du Trésorier – Caisse de la famille</h2>
+                <div class="form-group">
+                    <label>Nom du Membre</label>
+                    <input type="text" id="tresorierMembre" placeholder="Ex: Jean KODJO">
+                </div>
+                <div class="form-group">
+                    <label>Montant (F CFA)</label>
+                    <input type="number" id="tresorierMontant" placeholder="Ex: 5000">
+                </div>
+                <button class="btn-primary" style="background: #059669;" onclick="validerCotisationTresorier()">Enregistrer la cotisation</button>
+                <div class="stat-card" style="max-width:520px; margin-top:22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px;">💸 Enregistrer une dépense</h4>
+                    <div class="form-group"><label for="depenseLibelle">Motif</label><input type="text" id="depenseLibelle" placeholder="Ex: Location de la salle"></div>
+                    <div class="form-group"><label for="depenseMontant">Montant (F CFA)</label><input type="number" id="depenseMontant" min="1"></div>
+                    <button class="btn-primary" style="background:#dc2626" onclick="enregistrerDepense()">Enregistrer la dépense</button>
+                </div>
+                <div class="stat-card" style="max-width:520px; margin-top:22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px;">📒 Journal de la caisse</h4>
+                    <p style="font-size:.8rem;margin-bottom:8px">Une erreur ? Indiquez le motif puis touchez ↩ : l’annulation doit être approuvée par 3 membres du bureau.</p>
+                    <input type="text" id="motifAnnul" maxlength="200" placeholder="Motif de l’annulation" aria-label="Motif de l’annulation" style="width:100%;margin-bottom:10px;padding:9px 12px;border:2px solid #bbf7d0;border-radius:12px">
+                    <div id="journalCaisse"></div>
+                </div>
+
+                <div class="stat-card" style="max-width:520px; margin-top:28px;">
+                    <h4 style="color:#14532d; margin-bottom:12px;">📊 Aperçu des cotisations (Novembre)</h4>
+                    <div id="tresorierApercu"></div>
+                </div>
+            </div>
+
+            <!-- ================= 9. ESPACE SECRÉTAIRE ================= -->
+            <div id="secretaireView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 15px; color: #14532d;">📝 Espace du Secrétaire – Mémoire de la famille</h2>
+                <div class="form-group">
+                    <label>Rédiger un Rapport ou une Annonce pour l'accueil</label>
+                    <textarea id="texteAnnonce" rows="5" placeholder="Résumé du rapport..."></textarea>
+                </div>
+                <button class="btn-primary" style="background: #3b82f6;" onclick="publierAnnonce()">Publier sur l'accueil</button>
+            </div>
+
+            <!-- ================= CALENDRIER & ÉVÉNEMENTS ================= -->
+            <div id="calendrierView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 8px; color: #14532d;">📅 Calendrier & Événements de la famille</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 20px;">Réunions, fêtes, sorties… Tout ce qui rassemble la famille.</p>
+
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+                    <button class="btn-primary" style="padding:10px 18px; font-size:0.88rem;" onclick="editEvtId=null;document.getElementById('addEventForm').style.display = document.getElementById('addEventForm').style.display === 'none' ? 'block' : 'none'">➕ Ajouter un événement</button>
+                </div>
+
+                <div id="addEventForm" style="display:none; background:#ffffff; border:2px solid #bbf7d0; border-radius:18px; padding:22px; margin-bottom:24px; max-width:520px;">
+                    <h3 style="color:#14532d; margin-bottom:14px; font-size:1.05rem;">Nouvel événement</h3>
+                    <div class="form-group">
+                        <label>Titre</label>
+                        <input type="text" id="eventTitre" placeholder="Ex: Réunion de préparation fête">
+                    </div>
+                    <div class="form-group">
+                        <label>Date (JJ/MM/AAAA)</label>
+                        <input type="text" id="eventDate" placeholder="Ex: 22/12/2026">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="eventDesc" rows="3" placeholder="Détails de l'événement..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventMontant">Cotisation par personne (F CFA) — laissez vide s’il n’y en a pas</label>
+                        <input type="number" id="eventMontant" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="eventVisio" style="width:auto"> 📹 Réunion en vidéo (visioconférence)</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventCollecteur">Collecteur (la personne qui reçoit l’argent)</label>
+                        <select id="eventCollecteur"></select>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-primary" onclick="ajouterEvenement()">Enregistrer ❤️</button>
+                        <button class="btn-primary" style="background:#94a3b8;" onclick="annulerEvenement()">Annuler</button>
+                    </div>
+                </div>
+
+                <div class="events-list" id="eventsList">
+                    <!-- Rempli par JS -->
+                </div>
+            </div>
+
+            <!-- ================= PARAMÈTRES ================= -->
+            <div id="parametresView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 8px; color: #14532d;">⚙️ Paramètres de la famille</h2>
+                <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 22px;">Personnalisez le nom, l’apparence et l’identité de votre groupe familial.</p>
+
+                <div class="stat-card" style="max-width: 520px; margin-bottom: 22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px; font-size:1.05rem;">🏡 Nom de la famille / du groupe</h4>
+                    <p style="font-size:0.85rem; color:#4d7c0f; margin-bottom:12px;">Ce nom apparaît partout : menu, titre, bandeau d’installation…</p>
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label>Nouveau nom</label>
+                        <input type="text" id="inputNomFamille" placeholder="Ex: Famille KODJO, Association Les Unis…">
+                    </div>
+                    <button class="btn-primary" onclick="enregistrerNomFamille()">Enregistrer le nom ❤️</button>
+                    <p id="nomFamilleFeedback" style="margin-top:12px; font-size:0.85rem; color:#16a34a; display:none;"></p>
+                </div>
+
+                <div class="stat-card" style="max-width: 520px; margin-bottom: 22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px; font-size:1.05rem;">🌙 Mode d’affichage</h4>
+                    <p style="font-size:0.85rem; color:#4d7c0f; margin-bottom:14px;">Passez en mode sombre pour plus de confort le soir.</p>
+                    <button class="btn-primary" id="btnDarkMode" onclick="toggleDarkMode()">Activer le mode sombre</button>
+                </div>
+
+                <div class="stat-card" style="max-width: 520px; margin-bottom: 22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px; font-size:1.05rem;">📥 Export des données</h4>
+                    <p style="font-size:0.85rem; color:#4d7c0f; margin-bottom:14px;">Téléchargez la liste complète des membres (CSV).</p>
+                    <button class="btn-primary" style="background:linear-gradient(135deg,#3b82f6,#2563eb);" onclick="exporterMembres()">Exporter les membres</button>
+                </div>
+
+                <div class="stat-card" style="max-width:520px; margin-bottom:22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px;">🔔 Rappels</h4>
+                    <p style="font-size:0.85rem; margin-bottom:12px;">Recevez un rappel des anniversaires et événements proches à l’ouverture de l’application.</p>
+                    <button class="btn-primary" onclick="activerRappels()">Activer les notifications</button>
+                </div>
+
+                <div class="stat-card" style="max-width:520px; margin-bottom:22px;">
+                    <h4 style="color:#14532d; margin-bottom:12px;">☁️ Synchronisation famille</h4>
+                    <p style="font-size:0.85rem; margin-bottom:12px;">Même code famille sur tous les téléphones = mêmes données. Le bureau peut en générer un.</p>
+                    <div class="form-group" style="margin-bottom:12px;"><label for="inputCode">Code famille</label><input type="text" id="inputCode" autocomplete="off" placeholder="24 lettres/chiffres"></div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn-primary" onclick="enregistrerCode()">Enregistrer</button><button class="btn-primary" style="background:#3b82f6" onclick="genererCode()">Générer</button></div>
+                </div>
+
+                <div class="history-card green" style="max-width:520px;">
+                    <h4>💡 Astuce</h4>
+                    <p>Vous pouvez aussi cliquer directement sur le nom en haut du menu latéral pour le modifier rapidement.</p>
+                </div>
+            </div>
+
+            <!-- ================= 11. ESPACE ADMIN ================= -->
+            <div id="adminView" class="view">
+                <h2 style="font-size: 1.25rem; margin-bottom: 15px; color: #14532d;">🛠️ Espace Administrateur de la famille</h2>
+                <div class="history-card" style="border-left-color: #7c3aed; background: #f5f3ff; max-width: 600px;">
+                    <h4 style="color: #5b21b6;">Panneau de contrôle</h4>
+                    <p style="color: #4c1d95;">Accès réservé. Vous pouvez gérer les membres, les rôles et les paramètres de l'application ici.</p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+                        <button class="btn-primary" onclick="sauvegarder()">💾 Sauvegarde (JSON)</button>
+                        <button class="btn-primary" style="background:#dc2626" onclick="reinitialiserCodes()">🔑 Réinitialiser les codes membres</button>
+                        <input type="file" id="fichierSauvegarde" accept=".json" style="display:none" onchange="restaurer(this)">
+                        <button class="btn-primary" style="background:#3b82f6" onclick="document.getElementById('fichierSauvegarde').click()">📥 Restaurer une sauvegarde</button>
+                    </div>
+                </div>
+                <button class="btn-primary" style="background: #7c3aed; margin-top: 15px;" onclick="switchView('homeView')">Retour à l'accueil</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= BOUTON FIXE ENVELOPPE EN BAS ================= -->
+    <div class="bottom-envelope-bar" onclick="switchView('voicesView')">
+        <span>💌 Messages d’amour</span>
+        <span class="envelope-badge" id="badgeMsg">0</span>
+    </div>
+
+    <script>
+        // Enregistrement du Service Worker pour le mode PWA / offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker enregistré', reg.scope))
+                    .catch(err => console.log('Erreur SW:', err));
+            });
+        }
+
+        // Script pour déclencher l'installation automatique sur Android/PC
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBanner').style.display = 'block';
+        });
+
+        function installerApp() {
+            if (!deferredPrompt) { toast('Sur iPhone : touchez Partager puis « Sur l’écran d’accueil ».'); localStorage.setItem('iosVu', '1'); document.getElementById('installBanner').style.display = 'none'; return; }
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Utilisateur a accepté l\'installation');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // ==================== OUTILS, COMPTES & DROITS ====================
+        const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        const urlSure = u => (/^https:\/\/[^\s'"()<>]+$/i.test(u || '') || /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(u || '')) ? u : '';
+        const lire = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v ?? d; } catch (e) { return d; } };
+        const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('⚠️ Sauvegarde impossible sur cet appareil.'); } if (CLES_SYNC.includes(k)) pousser(); };
+        const saveAll = () => { ecrire('membres', membres); ecrire('evenements', evenements); };
+
+        // ==================== SYNCHRONISATION FIREBASE (optionnelle) ====================
+        // Collez ici la configuration Firebase (voir README.md). Laissez null pour rester en mode local.
+        const FIREBASE_CONFIG = null;
+        const CLES_SYNC = ['membres', 'evenements', 'caisse', 'annonces', 'suggestions', 'messages', 'suppr', 'annulations', 'sondages'];
+        let docCloud = null, stockage = null, codeFamille = localStorage.getItem('codeFamille') || '', applique = false, minuteur = null, dernier = '';
+        const etatLocal = () => ({ membres, evenements, caisse, annonces, suggestions, messages, suppr, annulations, sondages });
+        const chargerScript = src => new Promise((ok, ko) => { const x = document.createElement('script'); x.src = src; x.onload = ok; x.onerror = ko; document.head.appendChild(x); });
+        function majTicker() {
+            const t = document.querySelector('.ticker-text'); if (!t) return;
+            const auj = new Date(); auj.setHours(0, 0, 0, 0);
+            const prochains = evenements.map(e => { const p = e.date.split('/').map(Number); return { e, d: new Date(p[2], p[1] - 1, p[0]) }; }).filter(x => x.d >= auj).sort((a, b) => a.d - b.d);
+            const ev = prochains[0] ? ' • 📅 Prochain rendez-vous : ' + prochains[0].e.titre + ' le ' + prochains[0].e.date : '';
+            t.textContent = '❤️ Bienvenue dans notre belle famille ! • 🕊️ Paix, amour et fraternité entre nous' + ev + ' • 🌿 Que la joie et l’unité nous accompagnent';
+        }
+        function rafraichirDonnees() { verifierAnnulations(); majTicker(); majStats(); rappels(); appliquerSession(); afficherEvenements(); majMessages(); actualiserAnniversaires(); actualiserServices(); }
+        function fusionner(a, b, cle) {
+            const map = new Map();
+            [...(b || []), ...(a || [])].forEach(x => { const k = cle(x), p = map.get(k); if (!p || (x.maj || 0) >= (p.maj || 0)) map.set(k, x); });
+            return [...map.values()];
+        }
+        function fusionEtat(a, b) {
+            b = b || {};
+            const sup = [...new Set([...(a.suppr || []), ...(b.suppr || [])])];
+            const uni = (p, k, xs, ys) => fusionner(xs, ys, k).filter(x => !p || !sup.includes(p + ':' + x.id));
+            const cle2 = x => x.de + '|' + x.date + '|' + x.texte;
+            const msgs = uni('msg', x => x.id, a.messages, b.messages).map(m => {
+                const l = (a.messages || []).find(x => x.id === m.id), r = (b.messages || []).find(x => x.id === m.id), vu = new Set();
+                m.reponses = [...(l ? l.reponses : []), ...(r ? r.reponses : [])].filter(x => { const k = cle2(x); if (vu.has(k)) return false; vu.add(k); return true; });
+                return m;
+            }).sort((x, y) => y.ts - x.ts);
+            const evs = uni('e', x => x.id, a.evenements, b.evenements).map(ev => {
+                const l = (a.evenements || []).find(x => x.id === ev.id), r = (b.evenements || []).find(x => x.id === ev.id);
+                if (ev.cot) {
+                    const ann = [...new Set([...((l && l.cot && l.cot.annules) || []), ...((r && r.cot && r.cot.annules) || [])])], vm = new Map();
+                    [...((r && r.cot) ? r.cot.versements : []), ...((l && l.cot) ? l.cot.versements : [])].forEach(v => vm.set(v.ts, v));
+                    ev.cot = { ...ev.cot, annules: ann, versements: [...vm.values()].filter(v => !ann.includes(v.ts)) };
+                }
+                if ((l && l.rsvp) || (r && r.rsvp)) {
+                    const o = { ...((r && r.rsvp) || {}) };
+                    Object.entries((l && l.rsvp) || {}).forEach(([k, v]) => { if (!o[k] || v.ts >= o[k].ts) o[k] = v; });
+                    ev.rsvp = o;
+                }
+                return ev;
+            });
+            const caisseB = b.caisse && (b.caisse.maj || 0) > ((a.caisse || {}).maj || 0);
+            return { membres: uni('m', x => x.id, a.membres, b.membres), evenements: evs, messages: msgs,
+                annonces: uni(null, cle2, a.annonces, b.annonces), suggestions: uni(null, cle2, a.suggestions, b.suggestions), caisse: caisseB ? b.caisse : a.caisse, suppr: sup, annulations: fusionAnn(a.annulations, b.annulations), sondages: fusionSond(a.sondages, b.sondages, sup) };
+        }
+        function appliquerEtat(f) {
+            applique = true;
+            membres = f.membres; evenements = f.evenements; messages = f.messages; annonces = f.annonces; suggestions = f.suggestions; caisse = f.caisse; suppr = f.suppr; annulations = f.annulations || annulations; sondages = f.sondages || sondages;
+            CLES_SYNC.forEach(k => ecrire(k, etatLocal()[k]));
+            applique = false;
+            rafraichirDonnees();
+        }
+        function pousser() {
+            if (!docCloud || applique) return;
+            clearTimeout(minuteur);
+            minuteur = setTimeout(async () => {
+                try {
+                    const f = await firebase.firestore().runTransaction(async t => {
+                        const sn = await t.get(docCloud); let d = {};
+                        if (sn.exists) { try { d = JSON.parse(sn.data().data); } catch (e) {} }
+                        const m = fusionEtat(etatLocal(), d);
+                        if (JSON.stringify(m) !== JSON.stringify(d)) t.set(docCloud, { data: JSON.stringify(m), maj: Date.now() });
+                        return m;
+                    });
+                    const j = JSON.stringify(f);
+                    if (j !== dernier) { dernier = j; appliquerEtat(f); }
+                } catch (e) { toast('⚠️ Synchronisation impossible pour le moment.'); }
+            }, 800);
+        }
+        async function televerserAudio(id, blob) {
+            if (!stockage) return;
+            try { await stockage.ref('familles/' + codeFamille + '/audios/' + id).put(blob); } catch (e) { toast('⚠️ Vocal non envoyé au cloud.'); }
+        }
+        async function urlAudio(id) {
+            if (!stockage) return null;
+            try { return await stockage.ref('familles/' + codeFamille + '/audios/' + id).getDownloadURL(); } catch (e) { return null; }
+        }
+        async function initCloud() {
+            const h = location.hash.match(/code=([a-z0-9]{16,})/i);
+            if (h) { localStorage.setItem('codeFamille', h[1]); codeFamille = h[1]; history.replaceState(null, '', location.pathname + location.search); }
+            if (!FIREBASE_CONFIG || codeFamille.length < 16) return;
+            try {
+                for (const p of ['app', 'auth', 'firestore', 'storage']) await chargerScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-' + p + '-compat.js');
+                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                await firebase.auth().signInAnonymously();
+                stockage = firebase.storage();
+                docCloud = firebase.firestore().collection('familles').doc(codeFamille);
+                docCloud.onSnapshot(snap => {
+                    if (snap.metadata.hasPendingWrites) return;
+                    let d = {}; if (snap.exists) { try { d = JSON.parse(snap.data().data); } catch (e) {} }
+                    const f = fusionEtat(etatLocal(), d), j = JSON.stringify(f);
+                    if (j !== dernier) { dernier = j; appliquerEtat(f); }
+                    if (j !== JSON.stringify(d)) pousser();
+                }, () => toast('⚠️ Mode local : le cloud est injoignable.'));
+            } catch (e) { toast('⚠️ Cloud indisponible, mode local.'); }
+        }
+        function enregistrerCode() {
+            const v = document.getElementById('inputCode').value.trim();
+            if (!/^[a-z0-9]{16,}$/i.test(v)) return toast('Le code famille : 16 lettres/chiffres minimum.');
+            localStorage.setItem('codeFamille', v); toast('Code enregistré, rechargement…'); setTimeout(() => location.reload(), 1200);
+        }
+        function genererCode() {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const a = new Uint8Array(24); crypto.getRandomValues(a);
+            document.getElementById('inputCode').value = [...a].map(x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 32]).join('');
+            toast('Code généré : enregistrez-le, puis partagez le lien avec #code=… à la famille.');
+        }
+        function supprimerMembre(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            if (!confirm('Supprimer ce membre ?')) return;
+            membres = membres.filter(m => m.id !== id); suppr.push('m:' + id); saveAll(); ecrire('suppr', suppr);
+            fermerProfil(); majStats(); appliquerSession(); actualiserAnniversaires();
+        }
+        function supprimerEvenement(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            if (!confirm('Supprimer cet événement ?')) return;
+            evenements = evenements.filter(e => e.id !== id); suppr.push('e:' + id); saveAll(); ecrire('suppr', suppr); afficherEvenements();
+        }
+        function enregistrerDepense() {
+            if (!aRole('tresorier')) return toast('🔒 Réservé au Trésorier.');
+            const montant = parseInt(document.getElementById('depenseMontant').value, 10), lib = document.getElementById('depenseLibelle').value.trim();
+            if (!(montant > 0) || !lib) return toast('Indiquez le motif et le montant.');
+            caisse.depenses += montant; journaliser('Dépense – ' + lib, -montant); caisse.maj = Date.now(); ecrire('caisse', caisse); majStats();
+            document.getElementById('depenseMontant').value = ''; document.getElementById('depenseLibelle').value = '';
+            toast('✅ Dépense enregistrée : ' + lib + ' (' + fmtF(montant) + ')');
+        }
+        const norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        const fmtF = n => Number(n).toLocaleString('fr-FR') + ' F';
+        function toast(msg) {
+            let t = document.getElementById('toast');
+            if (!t) { t = document.createElement('div'); t.id = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+            t.textContent = msg; t.classList.add('show');
+            clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3800);
+        }
+        let comptes = lire('comptes', {}), suggestions = lire('suggestions', []), annonces = lire('annonces', []);
+        let caisse = lire('caisse', { recu: 280000, depenses: 150000 }), suppr = lire('suppr', []), annulations = lire('annulations', []), sondages = lire('sondages', []);
+        let session = null; try { session = JSON.parse(sessionStorage.getItem('session')); } catch (e) {}
+        const essais = {}, verrou = {};
+        async function hacher(t) {
+            if (!(window.crypto && crypto.subtle)) return 'x' + btoa(unescape(encodeURIComponent(t)));
+            const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+            return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+        function fonctions(m) {
+            const r = norm(m.role), f = [];
+            if (r.includes('president') && !r.includes('vice')) f.push('president');
+            if (r.includes('secretaire')) f.push('secretaire');
+            if (r.includes('tresorier')) f.push('tresorier');
+            return f;
+        }
+        function trouverCompte(saisie) {
+            const n = norm(saisie);
+            if (n === 'admin' || n === 'administrateur') return { cle: 'admin', nom: 'Administrateur', perms: ['admin'] };
+            const m = membres.find(x => norm(x.nom) === n) || membres.find(x => fonctions(x).includes(n));
+            return m ? { cle: String(m.id), nom: m.nom, perms: ['membre', ...fonctions(m)] } : null;
+        }
+        function aRole(r) {
+            if (!session) return false;
+            const p = session.perms;
+            if (p.includes('admin') || p.includes('president')) return true;
+            return r === 'bureau' ? p.includes('secretaire') : p.includes(r);
+        }
+        function peutVoir(v) {
+            const need = { secretaireView: 'secretaire', tresorierView: 'tresorier', presidentView: 'president', adminView: 'admin' };
+            if (v === 'espaceMembreView' || v === 'visioView' || v === 'sondagesView') return !!session;
+            if (v === 'approbationsView') return estBureau() || (!!session && session.perms.includes('admin'));
+            if (v === 'adminView') return !!session && session.perms.includes('admin');
+            return !need[v] || aRole(need[v]);
+        }
+        function appliquerSession() {
+            document.getElementById('userRoleDisplay').textContent = session ? 'Connecté : ' + session.nom + ' 🌿' : 'Mode Public 🌿';
+            const n = document.getElementById('navLogout'); if (n) n.style.display = session ? 'flex' : 'none';
+            majStats(); majApprobations(); majSondages(); rappels();
+            document.getElementById('dejaConnecte').style.display = session ? 'block' : 'none'; document.getElementById('dejaNom').textContent = session ? session.nom : '';
+            majEspaceMembre(); majTresorier(); majPresident(); afficherEvenements();
+            if (typeof afficherMembres === 'function') { afficherMembres(); actualiserServices(); }
+        }
+        function deconnecter() { session = null; sessionStorage.removeItem('session'); appliquerSession(); switchView('homeView'); toast('À bientôt ❤️'); }
+        function majStats() {
+            document.getElementById('salutation').textContent = session ? 'Bonjour ' + session.nom + ' 👋 Heureux de vous retrouver.' : 'Bienvenue dans la famille ❤️ Connectez-vous pour accéder à toutes les fonctions.';
+            majJournal();
+            document.getElementById('statMembres').textContent = membres.length;
+            document.getElementById('statCaisse').textContent = fmtF(caisse.recu - caisse.depenses);
+            document.getElementById('bilanTexte').textContent = 'Total reçu : ' + fmtF(caisse.recu) + ' • Dépenses : ' + fmtF(caisse.depenses) + ' • Solde en caisse : ' + fmtF(caisse.recu - caisse.depenses) + '. Merci à chacun pour sa contribution d’amour et de solidarité.';
+            document.getElementById('annoncesAccueil').innerHTML = annonces.map(a => `<div class="history-card"><h4>📢 Annonce</h4><p>${esc(a.texte)}</p><span class="history-date">${esc(a.date)} • ${esc(a.de)}</span></div>`).join('');
+        }
+        function majEspaceMembre() {
+            const m = session && membres.find(x => String(x.id) === session.cle);
+            const ok = m && m.cotisation === 'À jour';
+            document.getElementById('statCotis').textContent = m ? (ok ? '✅ À jour' : '⚠️ En retard') : '—';
+            document.getElementById('statCotisLbl').textContent = m ? 'Cotisation du mois' : 'Profil membre non lié';
+            document.getElementById('statAnniv').textContent = m ? m.anniv : '—';
+            document.getElementById('monService').textContent = m ? m.service : 'Aucun profil membre associé à ce compte.';
+            document.getElementById('histoCotis').innerHTML = m ? `<div class="cotisation-row"><span>Mois en cours</span><span style="color:${ok ? '#16a34a' : '#dc2626'};font-weight:700">${ok ? 'Payée ✅' : 'Non payée'}</span></div>` : '';
+        }
+        function majTresorier() {
+            majJournal();
+            const el = document.getElementById('tresorierApercu'); if (!el) return;
+            const ok = membres.filter(m => m.cotisation === 'À jour').length;
+            el.innerHTML = membres.map(m => `<div class="cotisation-row"><span>${esc(m.nom)}</span><span style="color:${m.cotisation === 'À jour' ? '#16a34a' : '#dc2626'};font-weight:700">${m.cotisation === 'À jour' ? 'À jour ✅' : 'En retard'}</span></div>`).join('') + `<div class="cotisation-row" style="font-weight:700"><span>À jour</span><span>${ok} / ${membres.length}</span></div>`;
+        }
+        function majPresident() {
+            const el = document.getElementById('listeSuggestions'); if (!el) return;
+            el.innerHTML = suggestions.length ? suggestions.map(x => `<div class="history-card" style="max-width:600px"><strong>Suggestion de ${esc(x.de)}</strong><p>${esc(x.texte)}</p><span class="history-date">${esc(x.date)}</span></div>`).join('') : '<p style="max-width:600px">Aucune suggestion pour le moment.</p>';
+        }
+        function publierAnnonce() {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const t = document.getElementById('texteAnnonce').value.trim();
+            if (!t) return toast('Écrivez votre annonce.');
+            annonces.unshift({ texte: t, de: session.nom, date: new Date().toLocaleDateString('fr-FR') });
+            ecrire('annonces', annonces); majStats();
+            document.getElementById('texteAnnonce').value = '';
+            toast('✅ Publié sur l’accueil.');
+        }
+        function sauvegarder() {
+            const blob = new Blob([JSON.stringify(etatLocal(), null, 2)], { type: 'application/json' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sauvegarde_famille.json'; a.click(); URL.revokeObjectURL(a.href);
+        }
+        function reinitialiserCodes() {
+            if (!session || !session.perms.includes('admin')) return;
+            if (!confirm('Chaque membre devra recréer son code à sa prochaine connexion. Continuer ?')) return;
+            Object.keys(comptes).forEach(k => { if (k !== 'admin') delete comptes[k]; });
+            ecrire('comptes', comptes); toast('Codes réinitialisés.');
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerProfil(); });
+
+        // ==================== MESSAGES & VOCAUX ====================
+        let messages = lire('messages', [{ id: 1, de: 'Jean KODJO', texte: 'Je propose de fêter la fin d’année en famille. Qu’en pensez-vous ?', audio: false, date: '10/11/2026', ts: 1, reponses: [{ de: 'Sophie KODJO', texte: 'Je suis d’accord pour le 28 décembre. ❤️', date: '11/11/2026' }] }]);
+        const bdd = () => new Promise((ok, ko) => { const r = indexedDB.open('famille', 1); r.onupgradeneeded = () => r.result.createObjectStore('audios'); r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error); });
+        async function audioOp(mode, id, blob) {
+            const d = await bdd();
+            return new Promise((ok, ko) => {
+                const st = d.transaction('audios', mode === 'get' ? 'readonly' : 'readwrite').objectStore('audios');
+                const r = mode === 'put' ? st.put(blob, id) : mode === 'del' ? st.delete(id) : st.get(id);
+                r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+            });
+        }
+        let rec = null, chunks = [], blobRec = null;
+        async function basculerEnregistrement() {
+            const b = document.getElementById('btnRec'), etat = document.getElementById('recEtat');
+            if (rec && rec.state === 'recording') { rec.stop(); return; }
+            if (!navigator.mediaDevices || !window.MediaRecorder) return toast('Enregistrement non pris en charge par ce navigateur.');
+            try {
+                const flux = await navigator.mediaDevices.getUserMedia({ audio: true });
+                chunks = []; rec = new MediaRecorder(flux);
+                rec.ondataavailable = e => chunks.push(e.data);
+                rec.onstop = () => {
+                    flux.getTracks().forEach(t => t.stop());
+                    blobRec = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+                    const a = document.getElementById('apercu'); a.src = URL.createObjectURL(blobRec); a.hidden = false;
+                    b.textContent = '🎙️'; etat.textContent = 'Vocal enregistré. Écoutez-le puis partagez.';
+                };
+                rec.start(); b.textContent = '⏹'; etat.textContent = 'Enregistrement… appuyez pour arrêter';
+                setTimeout(() => { if (rec && rec.state === 'recording') rec.stop(); }, 180000);
+            } catch (e) { toast('Micro refusé ou indisponible (HTTPS requis).'); }
+        }
+        async function partagerMessage() {
+            if (!session) { toast('🔒 Connectez-vous pour partager un message.'); return switchView('loginView'); }
+            const texte = document.getElementById('texteMessage').value.trim();
+            if (!texte && !blobRec) return toast('Enregistrez un vocal ou écrivez un message.');
+            const id = Date.now();
+            try { if (blobRec) { await audioOp('put', id, blobRec); televerserAudio(id, blobRec); } } catch (e) { return toast('Impossible d’enregistrer le vocal sur cet appareil.'); }
+            messages.unshift({ id, de: session.nom, texte, audio: !!blobRec, date: new Date().toLocaleDateString('fr-FR'), ts: id, maj: id, reponses: [] });
+            ecrire('messages', messages);
+            blobRec = null; document.getElementById('texteMessage').value = '';
+            const a = document.getElementById('apercu'); a.hidden = true; a.removeAttribute('src');
+            document.getElementById('recEtat').textContent = 'Appuyez pour enregistrer un vocal (3 min max)';
+            switchView('voicesView'); majMessages(); toast('Message partagé avec la famille ❤️');
+        }
+        function repondre(id) {
+            if (!session) return toast('🔒 Connectez-vous pour répondre.');
+            const champ = document.getElementById('rep-' + id), t = champ.value.trim();
+            if (!t) return;
+            const m = messages.find(x => x.id === id); if (!m) return;
+            m.maj = Date.now(); m.reponses.push({ de: session.nom, texte: t, date: new Date().toLocaleDateString('fr-FR') });
+            ecrire('messages', messages); majMessages();
+        }
+        async function supprimerMessage(id) {
+            const m = messages.find(x => x.id === id);
+            if (!m || !session || !(m.de === session.nom || aRole('bureau'))) return toast('🔒 Action non autorisée.');
+            if (!confirm('Supprimer ce message ?')) return;
+            messages = messages.filter(x => x.id !== id); suppr.push('msg:' + id); ecrire('suppr', suppr); ecrire('messages', messages);
+            try { await audioOp('del', id); } catch (e) {}
+            majMessages();
+        }
+        function marquerVus() { localStorage.setItem('vusTs', String(Date.now())); majBadge(); }
+        function majBadge() {
+            const vus = Number(localStorage.getItem('vusTs') || 0);
+            const n = messages.filter(m => m.ts > vus && (!session || m.de !== session.nom)).length;
+            const b = document.getElementById('badgeMsg'); b.textContent = n; b.style.display = n ? '' : 'none';
+        }
+        async function majMessages() {
+            const el = document.getElementById('listeMessages'); if (!el) return;
+            el.innerHTML = messages.length ? messages.map(m => `<div class="voice-item">
+                <strong style="color:#14532d">${esc(m.de)}</strong> <span style="font-size:.78rem;color:#65a30d">• ${esc(m.date)}</span>
+                ${m.texte ? `<p style="margin:8px 0;font-size:.92rem">${esc(m.texte)}</p>` : ''}
+                ${m.audio ? `<audio controls data-id="${m.id}" style="width:100%;margin:8px 0"></audio>` : ''}
+                <div style="border-top:1px dashed #bbf7d0;padding-top:10px;margin-top:10px">
+                    ${m.reponses.map(r => `<p style="font-size:.88rem;margin-bottom:6px">• <em>${esc(r.de)} :</em> ${esc(r.texte)}</p>`).join('')}
+                    <div class="reponse-ligne"><input id="rep-${m.id}" type="text" maxlength="300" placeholder="Répondre avec amour…" aria-label="Votre réponse" style="flex:1;padding:9px 12px;border:2px solid #bbf7d0;border-radius:12px">
+                    <button class="btn-primary" style="padding:9px 16px;font-size:.85rem" onclick="repondre(${m.id})">Envoyer</button>
+                    <button class="btn-primary" style="padding:9px 14px;font-size:.85rem;background:#94a3b8" aria-label="Supprimer" onclick="supprimerMessage(${m.id})">🗑</button></div>
+                </div></div>`).join('') : '<p>Aucun message pour le moment.</p>';
+            for (const a of el.querySelectorAll('audio[data-id]')) {
+                try { const b = await audioOp('get', Number(a.dataset.id)); if (b) a.src = URL.createObjectURL(b); else { const u = await urlAudio(Number(a.dataset.id)); if (u) a.src = u; else a.outerHTML = '<p style="font-size:.8rem">🔇 Vocal introuvable.</p>'; } } catch (e) {}
+            }
+            majBadge();
+        }
+
+        // ==================== RAPPELS, AGENDA, PHOTO, ÉDITION ====================
+        let editId = null;
+        function rappels() {
+            const el = document.getElementById('rappelsAccueil'); if (!el) return;
+            const auj = new Date(); auj.setHours(0, 0, 0, 0);
+            const items = [];
+            if (session) { const n = sondages.filter(x => !x.clos && !x.votes[session.cle]).length; if (n) items.push('🗳️ ' + n + ' sondage(s) attendent votre avis'); }
+            if (estBureau()) { const n = annulations.filter(a => a.statut === 'attente' && !a.approbations[session.cle]).length; if (n) items.push('🛡️ ' + n + ' demande(s) d’annulation de caisse attendent votre vote'); }
+            membres.forEach(m => { const i = getInfoAnniversaire(m.anniv); if (i && i.jours <= 1) items.push((i.jours === 0 ? '🎂 Aujourd’hui : ' : '🎂 Demain : ') + 'anniversaire de ' + m.nom); });
+            evenements.forEach(e => {
+                const p = e.date.split('/').map(Number), j = Math.round((new Date(p[2], p[1] - 1, p[0]) - auj) / 864e5);
+                if (j >= 0 && j <= 3) items.push((j === 0 ? '📅 Aujourd’hui : ' : j === 1 ? '📅 Demain : ' : '📅 Dans ' + j + ' jours : ') + e.titre);
+            });
+            el.innerHTML = items.length ? `<div class="history-card" style="border-left-color:#f59e0b"><h4>🔔 Rappels</h4>${items.map(t => `<p>${esc(t)}</p>`).join('')}</div>` : '';
+            notifier(items);
+        }
+        function notifier(items) {
+            if (!items.length || !('Notification' in window) || Notification.permission !== 'granted') return;
+            const k = new Date().toDateString(); if (localStorage.getItem('notifJour') === k) return;
+            localStorage.setItem('notifJour', k);
+            const corps = items.join(' • ');
+            if (navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification('Notre Belle Famille', { body: corps, icon: 'icon.png' })).catch(() => { try { new Notification('Notre Belle Famille', { body: corps }); } catch (e) {} });
+        }
+        async function activerRappels() {
+            if (!('Notification' in window)) return toast('Notifications non prises en charge sur ce navigateur.');
+            const p = await Notification.requestPermission();
+            toast(p === 'granted' ? '🔔 Rappels activés (à l’ouverture de l’application).' : 'Notifications refusées.'); rappels();
+        }
+        function exporterICS(id) {
+            const e = evenements.find(x => x.id === id); if (!e) return;
+            const p = e.date.split('/'), d = p[2] + p[1].padStart(2, '0') + p[0].padStart(2, '0');
+            const f = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]) + 1), fin = f.getFullYear() + String(f.getMonth() + 1).padStart(2, '0') + String(f.getDate()).padStart(2, '0');
+            const t = v => String(v).replace(/[,;]/g, ' ');
+            const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Notre Belle Famille//FR', 'BEGIN:VEVENT', 'UID:' + e.id + '@famille', 'DTSTAMP:' + d + 'T000000Z', 'DTSTART;VALUE=DATE:' + d, 'DTEND;VALUE=DATE:' + fin, 'SUMMARY:' + t(e.titre), 'DESCRIPTION:' + t(e.desc), 'END:VEVENT', 'END:VCALENDAR'].join(String.fromCharCode(13, 10));
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.download = 'evenement.ics'; a.click(); URL.revokeObjectURL(a.href);
+        }
+        function lirePhoto(inp) {
+            const f = inp.files[0]; if (!f) return;
+            const img = new Image();
+            img.onload = () => {
+                const c = document.createElement('canvas'); c.width = c.height = 128;
+                const t = Math.min(img.width, img.height);
+                c.getContext('2d').drawImage(img, (img.width - t) / 2, (img.height - t) / 2, t, t, 0, 0, 128, 128);
+                document.getElementById('newPhoto').value = c.toDataURL('image/jpeg', 0.7); URL.revokeObjectURL(img.src); toast('📷 Photo prête.');
+            };
+            img.onerror = () => toast('Image illisible.'); img.src = URL.createObjectURL(f);
+        }
+        function modifierMembre(id) {
+            const m = membres.find(x => x.id === id);
+            if (!m || !(aRole('bureau') || (session && session.cle === String(id)))) return toast('🔒 Action non autorisée.');
+            editId = id; fermerProfil(); switchView('annuaireView');
+            const v = (i, t) => { document.getElementById(i).value = t; };
+            v('newNom', m.nom); v('newRole', m.role); v('newAnniv', m.anniv === '—' ? '' : m.anniv); v('newTel', m.tel === 'Non renseigné' ? '' : m.tel); v('newService', m.service === 'À définir' ? '' : m.service); v('newGroupe', groupeDe(m)); v('newPhoto', '');
+            const f = document.getElementById('addMemberForm'); f.style.display = 'block'; f.scrollIntoView({ behavior: 'smooth' });
+        }
+        function annulerMembre() { editId = null; document.getElementById('addMemberForm').style.display = 'none'; }
+
+        // ==================== COTISATIONS D'ÉVÉNEMENT (Aînés / Jeunes) ====================
+        const groupeDe = m => m.groupe || (fonctions(m).length ? 'aines' : 'jeunes');
+        const nomGroupe = { aines: '👴 Aînés', jeunes: '🧑 Jeunes' };
+        const nouvelleCot = (montant, collecteur) => ({ montant, collecteur: Number(collecteur) || null, visible: { aines: true, jeunes: true }, versements: [], annules: [] });
+        const estCollecteur = e => !!session && !!e && !!e.cot && (String(e.cot.collecteur) === session.cle || aRole('tresorier'));
+        const optionsCollecteur = () => { const d = membres.find(m => fonctions(m).includes('tresorier')); return membres.map(m => `<option value="${m.id}"${d && d.id === m.id ? ' selected' : ''}>${esc(m.nom)}</option>`).join(''); };
+        const champCot = 'padding:8px;border:2px solid #bbf7d0;border-radius:10px';
+        function blocCotisation(e) {
+            if (!e.cot) {
+                if (!aRole('bureau')) return '';
+                return `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:.85rem">💰 Ouvrir une cotisation</summary>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><input type="number" id="cm-${e.id}" min="1" placeholder="Montant / personne" aria-label="Montant par personne" style="${champCot};width:150px">
+                    <select id="cc-${e.id}" aria-label="Collecteur" style="${champCot}">${optionsCollecteur()}</select>
+                    <button class="btn-primary" style="padding:6px 14px;font-size:.8rem" onclick="ouvrirCotisation(${e.id})">Ouvrir</button></div></details>`;
+            }
+            const c = e.cot, col = membres.find(m => m.id === c.collecteur), chef = estCollecteur(e);
+            const total = c.versements.reduce((t, v) => t + v.montant, 0);
+            const groupes = ['aines', 'jeunes'].map(g => {
+                const vs = c.versements.filter(v => v.groupe === g), tg = vs.reduce((t, v) => t + v.montant, 0), vis = c.visible[g];
+                const bouton = chef ? `<button class="btn-primary" style="padding:3px 10px;font-size:.72rem;background:#6366f1;margin-left:6px" onclick="basculerListe(${e.id},'${g}')">${vis ? '🙈 Masquer' : '👁 Afficher'}</button>` : '';
+                const lignes = vs.length ? vs.map(v => `<div class="cotisation-row"><span>${esc(v.nom)} <small>${esc(v.date)}</small></span><span>${fmtF(v.montant)}${chef ? ` <button aria-label="Annuler ce versement" style="border:none;background:none;cursor:pointer" onclick="supprimerVersement(${e.id},${v.ts})">✕</button>` : ''}</span></div>`).join('') + `<div class="cotisation-row" style="font-weight:700"><span>Total ${nomGroupe[g]}</span><span>${fmtF(tg)}</span></div>` : '<p style="font-size:.8rem">Aucun versement.</p>';
+                return `<div style="margin-top:8px"><strong style="font-size:.85rem">${nomGroupe[g]}</strong>${vis ? '' : ' <em style="font-size:.72rem">(masquée aux autres)</em>'}${bouton}${(vis || chef) ? lignes : '<p style="font-size:.8rem">🔒 Liste masquée par le collecteur.</p>'}</div>`;
+            }).join('');
+            const form = chef ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><select id="vm-${e.id}" aria-label="Membre" style="${champCot}">${membres.map(m => `<option value="${m.id}">${esc(m.nom)} (${groupeDe(m) === 'aines' ? 'Aîné' : 'Jeune'})</option>`).join('')}</select>
+                <input type="number" id="vv-${e.id}" min="1" value="${c.montant}" aria-label="Montant versé" style="${champCot};width:110px"><button class="btn-primary" style="padding:6px 14px;font-size:.8rem" onclick="enregistrerVersement(${e.id})">➕ Versement</button></div>` : '';
+            return `<div style="margin-top:12px;border-top:1px dashed #bbf7d0;padding-top:10px"><strong>💰 Cotisation : ${fmtF(c.montant)} / personne</strong><br><span style="font-size:.8rem">Collecteur : ${esc(col ? col.nom : 'non défini')} • Total collecté : ${fmtF(total)}</span>${groupes}${form}</div>`;
+        }
+        function ouvrirCotisation(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const e = evenements.find(x => x.id === id), m = parseInt(document.getElementById('cm-' + id).value, 10);
+            if (!e || !(m > 0)) return toast('Indiquez le montant par personne.');
+            e.cot = nouvelleCot(m, document.getElementById('cc-' + id).value); e.maj = Date.now(); saveAll(); afficherEvenements(); toast('💰 Cotisation ouverte.');
+        }
+        function enregistrerVersement(id) {
+            const e = evenements.find(x => x.id === id);
+            if (!estCollecteur(e)) return toast('🔒 Réservé au collecteur.');
+            const mb = membres.find(x => String(x.id) === document.getElementById('vm-' + id).value), montant = parseInt(document.getElementById('vv-' + id).value, 10);
+            if (!mb || !(montant > 0)) return toast('Membre ou montant invalide.');
+            e.cot.versements.push({ membreId: mb.id, nom: mb.nom, groupe: groupeDe(mb), montant, date: new Date().toLocaleDateString('fr-FR'), ts: Date.now() });
+            e.maj = Date.now(); saveAll(); afficherEvenements(); toast('✅ ' + fmtF(montant) + ' reçus de ' + mb.nom);
+        }
+        function supprimerVersement(id, ts) {
+            const e = evenements.find(x => x.id === id);
+            if (!estCollecteur(e) || !confirm('Annuler ce versement ?')) return;
+            e.cot.annules.push(ts); e.cot.versements = e.cot.versements.filter(v => v.ts !== ts); e.maj = Date.now(); saveAll(); afficherEvenements();
+        }
+        function basculerListe(id, g) {
+            const e = evenements.find(x => x.id === id);
+            if (!estCollecteur(e)) return toast('🔒 Réservé au collecteur.');
+            e.cot.visible[g] = !e.cot.visible[g]; e.maj = Date.now(); saveAll(); afficherEvenements();
+            toast(e.cot.visible[g] ? '👁 Liste ' + nomGroupe[g] + ' affichée à la famille.' : '🙈 Liste ' + nomGroupe[g] + ' masquée pour les autres membres.');
+        }
+
+        // ==================== RÉUNION VIDÉO (Jitsi Meet) ====================
+        // domaine : serveur Jitsi. integre:false = la réunion s'ouvre dans un nouvel onglet (fonctionne avec meet.jit.si).
+        // integre:true = la réunion s'affiche DANS l'application : à utiliser uniquement avec votre propre serveur Jitsi (voir README).
+        const VISIO = { domaine: 'meet.jit.si', integre: false };
+        const salleDe = cle => 'NBF-' + codeFamille.slice(0, 16) + '-' + cle;
+        function rejoindreVisio(cle, titre) {
+            if (!session) { toast('🔒 Connectez-vous pour participer à la réunion.'); return switchView('loginView'); }
+            if (!/^[a-z0-9]{16,}$/i.test(codeFamille)) return toast('Le bureau doit d’abord définir le code famille (Paramètres) pour créer une salle privée.');
+            const url = 'https://' + VISIO.domaine + '/' + salleDe(cle) + '#userInfo.displayName=' + encodeURIComponent(JSON.stringify(session.nom)) + '&config.disableDeepLinking=true';
+            switchView('visioView');
+            const z = document.getElementById('visioZone');
+            if (VISIO.integre) {
+                z.innerHTML = `<h3 style="margin-bottom:10px">${esc(titre)}</h3><iframe title="Réunion vidéo" src="${esc(url)}" allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write" style="width:100%;height:70dvh;border:0;border-radius:16px;background:#000"></iframe><button class="btn-primary" style="background:#dc2626;margin-top:10px" onclick="quitterVisio()">Quitter la réunion</button>`;
+            } else {
+                window.open(url, '_blank', 'noopener');
+                z.innerHTML = `<div class="history-card"><h4>📹 ${esc(titre)}</h4><p>La réunion s’est ouverte dans un nouvel onglet. Si rien ne s’affiche, <a href="${esc(url)}" target="_blank" rel="noopener">touchez ici</a>.</p><p style="font-size:.82rem">La première personne qui lance la réunion doit se connecter avec un compte (Google, GitHub…) : elle devient l’animateur, les autres entrent ensuite directement.</p></div>`;
+            }
+        }
+        function quitterVisio() { document.getElementById('visioZone').innerHTML = ''; }
+        function rejoindreEvenement(id) { const e = evenements.find(x => x.id === id); if (e) rejoindreVisio('e' + e.id, e.titre); }
+        function activerVisio(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const e = evenements.find(x => x.id === id); if (!e) return;
+            e.visio = true; e.maj = Date.now(); saveAll(); afficherEvenements(); toast('📹 Visioconférence activée pour cet événement.');
+        }
+        function majVisio() {
+            const el = document.getElementById('visioEvenements'); if (!el) return;
+            const auj = new Date(); auj.setHours(0, 0, 0, 0);
+            const l = evenements.filter(e => e.visio && (p => new Date(p[2], p[1] - 1, p[0]) >= auj)(e.date.split('/').map(Number)));
+            el.innerHTML = l.length ? '<h3 style="margin-bottom:10px">Réunions planifiées</h3>' + l.map(e => `<div class="history-card"><h4>${esc(e.titre)}</h4><p>${esc(e.date)}</p><button class="btn-primary" style="padding:8px 16px;font-size:.85rem" onclick="rejoindreEvenement(${e.id})">📹 Rejoindre</button></div>`).join('') : '';
+        }
+
+        // ==================== FINITIONS ====================
+        const moisCourant = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+        function verifierMois() {
+            const mc = moisCourant(); let ch = false;
+            membres.forEach(m => { if (m.cotMois && m.cotMois !== mc && m.cotisation === 'À jour') { m.cotisation = 'En retard'; m.maj = Date.now(); ch = true; } });
+            if (ch) saveAll();
+        }
+        function journaliser(l, v, mid) { caisse.journal = [{ id: Date.now() + Math.floor(Math.random() * 1000), l, v, mid, d: new Date().toLocaleDateString('fr-FR') }, ...(caisse.journal || [])].slice(0, 100); }
+        function majJournal() {
+            const el = document.getElementById('journalCaisse'); if (!el) return;
+            const j = caisse.journal || [], peut = estBureau() && aRole('tresorier');
+            el.innerHTML = j.length ? j.slice(0, 12).map(x => `<div class="cotisation-row"${x.annule ? ' style="opacity:.55;text-decoration:line-through"' : ''}><span>${esc(x.l)} <small>${esc(x.d)}</small></span><span style="color:${x.v > 0 ? '#16a34a' : '#dc2626'};font-weight:700">${x.v > 0 ? '+' : ''}${fmtF(x.v)} ${peut && !x.annule ? `<button aria-label="Demander l’annulation" title="Demander l’annulation" style="border:none;background:none;cursor:pointer" onclick="demanderAnnulation(${x.id})">↩</button>` : ''}</span></div>`).join('') : '<p style="font-size:.85rem">Aucune opération enregistrée pour le moment.</p>';
+        }
+        async function changerCode() {
+            if (!session) return;
+            const a = document.getElementById('ancienCode').value, n = document.getElementById('nouveauCode').value, c = comptes[session.cle];
+            if (!c || await hacher(c.sel + a) !== c.hash) return toast('Ancien code incorrect.');
+            if (n.length < 4) return toast('Nouveau code : 4 caractères minimum.');
+            const sel = Math.random().toString(36).slice(2);
+            comptes[session.cle] = { sel, hash: await hacher(sel + n) }; ecrire('comptes', comptes);
+            document.getElementById('ancienCode').value = ''; document.getElementById('nouveauCode').value = ''; toast('✅ Code modifié.');
+        }
+        function restaurer(inp) {
+            const f = inp.files[0]; if (!f || !session || !session.perms.includes('admin')) return;
+            const r = new FileReader();
+            r.onload = () => {
+                try {
+                    const d = JSON.parse(r.result);
+                    if (!Array.isArray(d.membres) || !Array.isArray(d.evenements)) throw new Error('format');
+                    if (!confirm('Remplacer les données actuelles par cette sauvegarde ?')) return;
+                    appliquerEtat({ membres: d.membres, evenements: d.evenements, messages: d.messages || [], annonces: d.annonces || [], suggestions: d.suggestions || [], caisse: d.caisse || caisse, suppr: d.suppr || [], annulations: d.annulations || [], sondages: d.sondages || [] });
+                    pousser(); toast('✅ Sauvegarde restaurée.');
+                } catch (e) { toast('Fichier de sauvegarde invalide.'); }
+                inp.value = '';
+            };
+            r.readAsText(f);
+        }
+        document.addEventListener('keydown', e => {
+            if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && (e.target.classList.contains('pc-nav-item') || e.target.classList.contains('member-card'))) { e.preventDefault(); e.target.click(); }
+        });
+
+        // ==================== ÉVÉNEMENTS : MODIFICATION & PARTICIPATION ====================
+        let editEvtId = null;
+        function modifierEvenement(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const e = evenements.find(x => x.id === id); if (!e) return;
+            editEvtId = id;
+            document.getElementById('eventTitre').value = e.titre; document.getElementById('eventDate').value = e.date; document.getElementById('eventDesc').value = e.desc === 'Aucun détail.' ? '' : e.desc;
+            const f = document.getElementById('addEventForm'); f.style.display = 'block'; f.scrollIntoView({ behavior: 'smooth' });
+        }
+        function annulerEvenement() { editEvtId = null; document.getElementById('addEventForm').style.display = 'none'; }
+        function blocParticipation(e) {
+            const oui = Object.values(e.rsvp || {}).filter(x => x.oui);
+            const moi = session && e.rsvp && e.rsvp[session.cle] && e.rsvp[session.cle].oui;
+            const noms = session && oui.length ? `<span style="font-size:.78rem"> — ${oui.map(x => esc(x.nom)).join(', ')}</span>` : '';
+            return `<div style="margin-top:8px"><button class="btn-primary" style="padding:4px 12px;font-size:.75rem;background:${moi ? '#16a34a' : '#64748b'}" onclick="participer(${e.id})">${moi ? '✅ Je participe' : '🙋 Je participe ?'}</button> <span style="font-size:.8rem">${oui.length} participant${oui.length > 1 ? 's' : ''}</span>${noms}</div>`;
+        }
+        function participer(id) {
+            if (!session) { toast('🔒 Connectez-vous pour confirmer votre présence.'); return switchView('loginView'); }
+            const e = evenements.find(x => x.id === id); if (!e) return;
+            e.rsvp = e.rsvp || {};
+            const deja = e.rsvp[session.cle] && e.rsvp[session.cle].oui;
+            e.rsvp[session.cle] = { nom: session.nom, oui: !deja, ts: Date.now() };
+            e.maj = Date.now(); saveAll(); afficherEvenements();
+            toast(deja ? 'Présence annulée.' : '✅ Présence confirmée, merci !');
+        }
+
+        // ==================== ANNULATIONS DE CAISSE (3 APPROBATIONS) & COMPTES RENDUS ====================
+        const QUORUM = 3;
+        const estBureau = () => !!session && ['president', 'secretaire', 'tresorier'].some(r => session.perms.includes(r));
+        function fusionAnn(xs, ys) {
+            const rang = { attente: 0, retiree: 1, appliquee: 2 }, map = new Map();
+            [...(ys || []), ...(xs || [])].forEach(x => {
+                const p = map.get(x.id);
+                if (!p) { map.set(x.id, { ...x, approbations: { ...x.approbations } }); return; }
+                map.set(x.id, { ...p, approbations: { ...p.approbations, ...x.approbations }, statut: rang[x.statut] > rang[p.statut] ? x.statut : p.statut });
+            });
+            return [...map.values()];
+        }
+        function appliquerAnnulation(a) {
+            const op = (caisse.journal || []).find(x => x.id === a.opId);
+            if (op && !op.annule) {
+                if (op.v > 0) caisse.recu = Math.max(0, caisse.recu - op.v); else caisse.depenses = Math.max(0, caisse.depenses + op.v);
+                op.annule = true;
+                if (op.mid) { const m = membres.find(x => x.id === op.mid); if (m) { m.cotisation = 'En retard'; delete m.cotMois; m.maj = Date.now(); saveAll(); } }
+                journaliser('Annulation approuvée – ' + op.l, -op.v); caisse.journal[0].annule = true;
+                caisse.maj = Date.now(); ecrire('caisse', caisse);
+            }
+            a.statut = 'appliquee';
+        }
+        function verifierAnnulations() {
+            let ch = false;
+            annulations.forEach(a => { if (a.statut === 'attente' && Object.keys(a.approbations).length >= QUORUM) { appliquerAnnulation(a); ch = true; } });
+            if (ch) { ecrire('annulations', annulations); majStats(); majTresorier(); majApprobations(); }
+        }
+        function demanderAnnulation(opId) {
+            if (!estBureau() || !aRole('tresorier')) return toast('🔒 Réservé au Trésorier ou au Président.');
+            const motif = document.getElementById('motifAnnul').value.trim();
+            if (!motif) return toast('Indiquez d’abord le motif de l’annulation.');
+            const op = (caisse.journal || []).find(x => x.id === opId);
+            if (!op || op.annule) return;
+            if (annulations.some(a => a.opId === opId && a.statut === 'attente')) return toast('Une demande est déjà en cours pour cette opération.');
+            annulations.unshift({ id: Date.now(), opId, libelle: op.l, v: op.v, motif, par: session.cle, parNom: session.nom, date: new Date().toLocaleDateString('fr-FR'), statut: 'attente', approbations: { [session.cle]: { nom: session.nom, ts: Date.now() } } });
+            ecrire('annulations', annulations); document.getElementById('motifAnnul').value = ''; majApprobations();
+            toast('Demande envoyée : encore ' + (QUORUM - 1) + ' approbations du bureau nécessaires.');
+        }
+        function approuverAnnulation(id) {
+            const a = annulations.find(x => x.id === id);
+            if (!a || a.statut !== 'attente' || !estBureau()) return toast('🔒 Réservé aux membres du bureau.');
+            if (a.approbations[session.cle]) return toast('Vous avez déjà approuvé cette demande.');
+            a.approbations[session.cle] = { nom: session.nom, ts: Date.now() };
+            const n = Object.keys(a.approbations).length;
+            if (n >= QUORUM) { appliquerAnnulation(a); toast('✅ Annulation appliquée (' + n + ' approbations).'); } else toast('✅ Approbation enregistrée (' + n + '/' + QUORUM + ').');
+            ecrire('annulations', annulations); majStats(); majTresorier(); majApprobations();
+        }
+        function retirerAnnulation(id) {
+            const a = annulations.find(x => x.id === id);
+            if (!a || a.statut !== 'attente' || !session || a.par !== session.cle) return;
+            a.statut = 'retiree'; ecrire('annulations', annulations); majApprobations(); toast('Demande retirée.');
+        }
+        function majApprobations() {
+            const el = document.getElementById('listeApprobations'); if (!el) return;
+            const nb = membres.filter(m => fonctions(m).length).length;
+            const alerte = nb < QUORUM ? `<p style="color:#b45309;font-size:.85rem;margin-bottom:12px">⚠️ Le bureau compte ${nb} membre(s) : il en faut au moins ${QUORUM} pour valider une annulation. Donnez une fonction (Président, Secrétaire, Trésorier) à d’autres membres.</p>` : '';
+            const statuts = { attente: '⏳ En attente', appliquee: '✅ Appliquée', retiree: '↩ Retirée' };
+            el.innerHTML = alerte + (annulations.length ? annulations.map(a => {
+                const n = Object.keys(a.approbations).length, vote = session && a.approbations[session.cle];
+                const noms = Object.values(a.approbations).map(x => esc(x.nom)).join(', ');
+                const btns = a.statut === 'attente' ? `${estBureau() && !vote ? `<button class="btn-primary" style="padding:6px 14px;font-size:.8rem" onclick="approuverAnnulation(${a.id})">✅ Approuver</button>` : ''} ${session && a.par === session.cle ? `<button class="btn-primary" style="padding:6px 14px;font-size:.8rem;background:#94a3b8" onclick="retirerAnnulation(${a.id})">Retirer</button>` : ''}` : '';
+                return `<div class="history-card" style="${a.statut === 'attente' ? '' : 'opacity:.7'}"><h4>${esc(a.libelle)} (${fmtF(a.v)})</h4><p>Motif : ${esc(a.motif)}</p><p style="font-size:.82rem">Demandée par ${esc(a.parNom)} le ${esc(a.date)} • ${statuts[a.statut]} • ${n}/${QUORUM} approbations : ${noms}</p>${btns}</div>`;
+            }).join('') : '<p>Aucune demande d’annulation.</p>');
+        }
+        function blocCompteRendu(e) {
+            const cr = e.cr ? `<p style="margin-top:8px;font-size:.88rem">📝 <strong>Compte rendu :</strong> ${esc(e.cr)}</p>` : '';
+            if (!aRole('bureau')) return cr;
+            return cr + `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.85rem">📝 ${e.cr ? 'Modifier' : 'Ajouter'} le compte rendu</summary><textarea id="cr-${e.id}" rows="3" maxlength="1500" style="width:100%;margin-top:6px;padding:8px;border:2px solid #bbf7d0;border-radius:10px">${esc(e.cr || '')}</textarea><button class="btn-primary" style="padding:6px 14px;font-size:.8rem;margin-top:6px" onclick="enregistrerCR(${e.id})">Enregistrer</button></details>`;
+        }
+        function enregistrerCR(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const e = evenements.find(x => x.id === id); if (!e) return;
+            e.cr = document.getElementById('cr-' + id).value.trim(); e.maj = Date.now(); saveAll(); afficherEvenements(); toast('📝 Compte rendu enregistré.');
+        }
+
+        // ==================== SONDAGES ====================
+        function fusionSond(xs, ys, sup) {
+            const map = new Map();
+            [...(ys || []), ...(xs || [])].forEach(x => {
+                const p = map.get(x.id);
+                if (!p) { map.set(x.id, { ...x, votes: { ...x.votes } }); return; }
+                const v = { ...p.votes }; Object.entries(x.votes || {}).forEach(([k, o]) => { if (!v[k] || o.ts >= v[k].ts) v[k] = o; });
+                map.set(x.id, { ...p, votes: v, clos: !!(p.clos || x.clos), maj: Math.max(p.maj || 0, x.maj || 0) });
+            });
+            return [...map.values()].filter(x => !(sup || []).includes('sd:' + x.id));
+        }
+        function creerSondage() {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const q = document.getElementById('sondageQ').value.trim();
+            const opts = [...new Set(document.getElementById('sondageOpts').value.split(String.fromCharCode(10)).map(t => t.trim().slice(0, 80)).filter(Boolean))];
+            if (!q) return toast('Écrivez la question.');
+            if (opts.length < 2 || opts.length > 6) return toast('Indiquez de 2 à 6 choix, un par ligne.');
+            sondages.unshift({ id: Date.now(), q, options: opts, auteur: session.nom, date: new Date().toLocaleDateString('fr-FR'), clos: false, maj: Date.now(), votes: {} });
+            ecrire('sondages', sondages);
+            document.getElementById('sondageQ').value = ''; document.getElementById('sondageOpts').value = '';
+            majSondages(); rappels(); toast('🗳️ Sondage publié.');
+        }
+        function voter(id, i) {
+            if (!session) { toast('🔒 Connectez-vous pour voter.'); return switchView('loginView'); }
+            const x = sondages.find(s => s.id === id); if (!x || x.clos) return toast('Ce sondage est clos.');
+            x.votes[session.cle] = { o: i, nom: session.nom, ts: Date.now() }; x.maj = Date.now();
+            ecrire('sondages', sondages); majSondages(); rappels(); toast('✅ Votre vote est enregistré.');
+        }
+        function cloreSondage(id) {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const x = sondages.find(s => s.id === id); if (!x) return;
+            x.clos = true; x.maj = Date.now(); ecrire('sondages', sondages); majSondages(); toast('Sondage clos.');
+        }
+        function supprimerSondage(id) {
+            if (!aRole('bureau') || !confirm('Supprimer ce sondage ?')) return;
+            sondages = sondages.filter(s => s.id !== id); suppr.push('sd:' + id); ecrire('sondages', sondages); ecrire('suppr', suppr); majSondages();
+        }
+        function majSondages() {
+            const f = document.getElementById('formSondage'); if (f) f.style.display = aRole('bureau') ? 'block' : 'none';
+            const el = document.getElementById('listeSondages'); if (!el) return;
+            el.innerHTML = sondages.length ? sondages.map(x => {
+                const total = Object.keys(x.votes).length, moi = session && x.votes[session.cle];
+                const lignes = x.options.map((t, i) => {
+                    const n = Object.values(x.votes).filter(v => v.o === i).length, pct = total ? Math.round(n * 100 / total) : 0, choisi = moi && moi.o === i;
+                    return `<button ${x.clos ? 'disabled' : ''} onclick="voter(${x.id},${i})" style="display:block;width:100%;text-align:left;margin-top:8px;padding:10px 14px;border:2px solid ${choisi ? '#16a34a' : '#bbf7d0'};border-radius:12px;cursor:pointer;font-size:.9rem;background:linear-gradient(90deg,rgba(134,239,172,.55) ${pct}%,transparent ${pct}%)">${choisi ? '✅ ' : ''}${esc(t)} <strong style="float:right">${pct}% (${n})</strong></button>`;
+                }).join('');
+                const outils = aRole('bureau') ? `<div style="margin-top:10px">${x.clos ? '' : `<button class="btn-primary" style="padding:5px 12px;font-size:.75rem;background:#6366f1" onclick="cloreSondage(${x.id})">Clore</button> `}<button class="btn-primary" style="padding:5px 12px;font-size:.75rem;background:#94a3b8" onclick="supprimerSondage(${x.id})">🗑 Supprimer</button></div>` : '';
+                return `<div class="history-card" style="${x.clos ? 'opacity:.75' : ''}"><h4>${esc(x.q)}</h4><span class="history-date">${esc(x.date)} • ${esc(x.auteur)} • ${total} vote${total > 1 ? 's' : ''} ${x.clos ? '• 🔒 clos' : ''}</span>${lignes}${outils}</div>`;
+            }).join('') : '<p>Aucun sondage pour le moment.</p>';
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('pcSidebar');
+            sidebar.classList.toggle('mobile-active');
+        }
+
+        function switchView(viewId, element) {
+            if (!peutVoir(viewId)) { toast('🔒 Espace réservé. Connectez-vous avec votre compte.'); viewId = 'loginView'; }
+            if (viewId === 'voicesView') marquerVus();
+            const views = document.querySelectorAll('.view');
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+
+            document.querySelectorAll('.pc-nav-item').forEach(i => i.classList.toggle('active', (i.getAttribute('onclick') || '').includes("'" + viewId + "'")));
+
+            document.getElementById('pcSidebar').classList.remove('mobile-active');
+            window.scrollTo(0, 0);
+        }
+
+        async function connecterUtilisateur() {
+            const saisie = document.getElementById('loginNom').value, code = document.getElementById('loginCode').value;
+            if (!saisie.trim() || !code.trim()) return toast('Veuillez remplir votre nom et votre code secret !');
+            const c = trouverCompte(saisie);
+            if (!c) return toast('Nom inconnu. Écrivez votre nom complet (ex : Jean KODJO).');
+            if (Date.now() < (verrou[c.cle] || 0)) return toast('Trop d’essais. Réessayez dans 30 secondes.');
+            let cpt = comptes[c.cle];
+            if (!cpt) {
+                if (code.length < 4) return toast('Choisissez un code d’au moins 4 caractères.');
+                const sel = Math.random().toString(36).slice(2);
+                cpt = comptes[c.cle] = { sel, hash: await hacher(sel + code) };
+                ecrire('comptes', comptes);
+                toast('✅ Code créé. Gardez-le précieusement.');
+            } else if (await hacher(cpt.sel + code) !== cpt.hash) {
+                essais[c.cle] = (essais[c.cle] || 0) + 1;
+                if (essais[c.cle] >= 5) { verrou[c.cle] = Date.now() + 30000; essais[c.cle] = 0; }
+                return toast('Code incorrect.');
+            }
+            session = { cle: c.cle, nom: c.nom, perms: c.perms };
+            sessionStorage.setItem('session', JSON.stringify(session));
+            document.getElementById('loginCode').value = '';
+            appliquerSession();
+            const p = c.perms;
+            const cible = p.includes('admin') ? 'adminView' : p.includes('president') ? 'presidentView' : p.includes('tresorier') ? 'tresorierView' : p.includes('secretaire') ? 'secretaireView' : 'espaceMembreView';
+            document.getElementById('titreMembre').textContent = 'Carnet de : ' + c.nom;
+            switchView(cible);
+            toast('Connexion réussie, bienvenue ' + c.nom + ' ❤️');
+        }
+
+        function envoyerSuggestionEcrite() {
+            const texte = document.getElementById('texteSuggestion').value.trim();
+            if (!session) return toast('🔒 Connectez-vous pour écrire au Président.');
+            if (!texte) return toast('Veuillez écrire votre suggestion !');
+            suggestions.unshift({ de: session.nom, texte, date: new Date().toLocaleDateString('fr-FR') });
+            ecrire('suggestions', suggestions); majPresident();
+            document.getElementById('texteSuggestion').value = '';
+            toast('Votre suggestion a été transmise au Président ❤️');
+        }
+
+        function validerCotisationTresorier() {
+            if (!aRole('tresorier')) return toast('🔒 Réservé au Trésorier.');
+            const m = membres.find(x => norm(x.nom) === norm(document.getElementById('tresorierMembre').value));
+            const montant = parseInt(document.getElementById('tresorierMontant').value, 10);
+            if (!m) return toast('Membre introuvable : écrivez son nom complet.');
+            if (!(montant > 0)) return toast('Montant invalide.');
+            caisse.recu += montant; m.cotisation = 'À jour'; m.cotMois = moisCourant(); journaliser('Cotisation – ' + m.nom, montant, m.id); caisse.maj = m.maj = Date.now();
+            ecrire('caisse', caisse); saveAll(); majStats(); majTresorier(); afficherMembres(); majEspaceMembre();
+            document.getElementById('tresorierMembre').value = ''; document.getElementById('tresorierMontant').value = '';
+            toast('✅ ' + fmtF(montant) + ' enregistrés pour ' + m.nom);
+        }
+
+        function verifierAccesAdmin() {
+            if (window.location.search.includes('admin')) {
+                switchView('loginView');
+                document.getElementById('loginNom').value = 'Administrateur';
+                toast('Entrez le code administrateur (le premier code saisi sera conservé).');
+            }
+        }
+
+        // ==================== GESTION DES PROFILS MEMBRES ====================
+        const couleursAvatar = [
+            'linear-gradient(135deg,#22c55e,#16a34a)',
+            'linear-gradient(135deg,#f472b6,#ec4899)',
+            'linear-gradient(135deg,#fbbf24,#f59e0b)',
+            'linear-gradient(135deg,#60a5fa,#3b82f6)',
+            'linear-gradient(135deg,#a78bfa,#8b5cf6)',
+            'linear-gradient(135deg,#34d399,#10b981)',
+            'linear-gradient(135deg,#fb923c,#f97316)',
+            'linear-gradient(135deg,#2dd4bf,#14b8a6)'
+        ];
+
+        // Dates d'anniversaire au format JJ/MM (ex: 15/11)
+        // On force quelques dates proches de "aujourd'hui" (13 nov 2026) pour la démo
+        let membres = [
+            { id: 1, nom: 'Jean KODJO', role: 'Président', anniv: '22/11', tel: '97 00 11 22', service: 'Plomberie & réparations', cotisation: 'À jour' },
+            { id: 2, nom: 'Sophie KODJO', role: 'Membre', anniv: '13/11', tel: '97 11 22 33', service: 'Couture & retouches', cotisation: 'À jour' },
+            { id: 3, nom: 'Marie ADJOVI', role: 'Secrétaire adjointe', anniv: '03/12', tel: '97 22 33 44', service: 'Cours de soutien scolaire', cotisation: 'À jour' },
+            { id: 4, nom: 'Paul AGBODJAN', role: 'Membre', anniv: '12/12', tel: '97 33 44 55', service: 'Transport & courses', cotisation: 'En retard' },
+            { id: 5, nom: 'Esther TOSSA', role: 'Membre', anniv: '28/12', tel: '97 44 55 66', service: 'Cuisine pour événements', cotisation: 'À jour' },
+            { id: 6, nom: 'David KODJO', role: 'Trésorier adjoint', anniv: '05/01', tel: '97 55 66 77', service: 'Informatique & téléphone', cotisation: 'À jour' },
+            { id: 7, nom: 'Aïcha MENSAH', role: 'Membre', anniv: '18/02', tel: '97 66 77 88', service: 'Jardinage & plantes', cotisation: 'À jour' },
+            { id: 8, nom: 'Grace HOUNSOU', role: 'Membre', anniv: '09/03', tel: '97 77 88 99', service: 'Photo & vidéo familiale', cotisation: 'À jour' }
+        ];
+
+        membres = lire('membres', membres);
+        const moisNoms = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
+        function initiales(nom) {
+            return nom.split(' ').map(p => p[0]).join('').substring(0, 2).toUpperCase();
+        }
+
+        // Calcule le prochain anniversaire et le nombre de jours restants
+        function getInfoAnniversaire(annivStr) {
+            if (!annivStr || !annivStr.includes('/')) return null;
+            const parts = annivStr.split('/');
+            const jour = parseInt(parts[0], 10);
+            const mois = parseInt(parts[1], 10) - 1; // 0-indexé
+            if (isNaN(jour) || isNaN(mois) || mois < 0 || mois > 11 || jour < 1 || new Date(2024, mois, jour).getMonth() !== mois) return null;
+
+            const aujourdhui = new Date();
+            aujourdhui.setHours(0, 0, 0, 0);
+            let prochain = new Date(aujourdhui.getFullYear(), mois, jour);
+            if (prochain < aujourdhui) {
+                prochain = new Date(aujourdhui.getFullYear() + 1, mois, jour);
+            }
+            const diffMs = prochain - aujourdhui;
+            const jours = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            return {
+                jour,
+                mois,
+                jours,
+                estAujourdhui: jours === 0,
+                label: moisNoms[mois] + ' ' + jour
+            };
+        }
+
+        // Met à jour le bandeau + les cartes d'anniversaire sur l'accueil
+        function actualiserAnniversaires() {
+            const scroll = document.getElementById('birthdayScroll');
+            const banner = document.getElementById('birthdayBanner');
+            const bannerText = document.getElementById('birthdayBannerText');
+            const subtitle = document.getElementById('birthdaySubtitle');
+            if (!scroll) return;
+
+            // Enrichir chaque membre avec les infos d'anniversaire
+            const avecAnniv = membres
+                .map((m, i) => {
+                    const info = getInfoAnniversaire(m.anniv);
+                    return info ? { ...m, info, couleur: couleursAvatar[i % couleursAvatar.length] } : null;
+                })
+                .filter(Boolean)
+                .sort((a, b) => a.info.jours - b.info.jours); // les plus proches en premier
+
+            const aujourdhuiList = avecAnniv.filter(m => m.info.estAujourdhui);
+            const aVenir = avecAnniv.filter(m => !m.info.estAujourdhui).slice(0, 8);
+
+            // ---- Bandeau animé ----
+            if (aujourdhuiList.length > 0) {
+                const noms = aujourdhuiList.map(m => m.nom).join(' & ');
+                const msg = `🎂 Joyeux Anniversaire à ${esc(noms)} aujourd'hui ! • 🎉 Que Dieu te/vous bénisse abondamment • ❤️ Toute la famille t'aime • 🕊️ Paix et joie sur cette nouvelle année • 🎂 Joyeux Anniversaire à ${esc(noms)} aujourd'hui !`;
+                bannerText.textContent = msg;
+                banner.style.display = 'block';
+                if (subtitle) {
+                    subtitle.textContent = aujourdhuiList.length === 1
+                        ? `Aujourd'hui c'est l'anniversaire de ${esc(noms)} ! Souhaitez-lui un joyeux anniversaire ❤️`
+                        : `Aujourd'hui ${aujourdhuiList.length} membres fêtent leur anniversaire ! Célébrez-les ❤️`;
+                }
+            } else {
+                banner.style.display = 'none';
+                if (subtitle) {
+                    const prochain = aVenir[0];
+                    subtitle.textContent = prochain
+                        ? `Prochain anniversaire : ${esc(prochain.nom)} dans ${prochain.info.jours} jour${prochain.info.jours > 1 ? 's' : ''} (${prochain.info.label})`
+                        : 'Aucun anniversaire enregistré pour le moment.';
+                }
+            }
+
+            // ---- Cartes ----
+            scroll.innerHTML = '';
+            const aAfficher = [...aujourdhuiList, ...aVenir];
+            if (aAfficher.length === 0) {
+                scroll.innerHTML = '<p style="color:#65a30d; padding:10px;">Ajoutez des dates d\'anniversaire dans les profils pour les voir ici.</p>';
+                return;
+            }
+
+            aAfficher.forEach(m => {
+                const card = document.createElement('div');
+                card.className = 'birthday-card' + (m.info.estAujourdhui ? ' today' : '');
+                card.onclick = () => {
+                    if (m.info.estAujourdhui) {
+                        toast(`🎂 Joyeux Anniversaire ${esc(m.nom)} !\nToute la famille t'embrasse avec amour ❤️🎉`);
+                    } else {
+                        toast(`🎂 Anniversaire de ${esc(m.nom)} le ${m.info.label}\nDans ${m.info.jours} jour${m.info.jours > 1 ? 's' : ''} !`);
+                    }
+                };
+
+                let dateLabel;
+                if (m.info.estAujourdhui) {
+                    dateLabel = `${m.info.label} • Aujourd'hui 🎉`;
+                } else if (m.info.jours === 1) {
+                    dateLabel = `${m.info.label} • Demain`;
+                } else {
+                    dateLabel = `${m.info.label} • Dans ${m.info.jours} jours`;
+                }
+
+                card.innerHTML = `
+                    <div class="bday-photo" style="background:${m.couleur}">${initiales(m.nom)}</div>
+                    <div class="bday-info">
+                        <strong>${esc(m.nom)}</strong>
+                        <span class="bday-date">${dateLabel}</span>
+                    </div>
+                    ${m.info.estAujourdhui ? '<div class="bday-wish">Joyeux Anniv !</div>' : ''}
+                `;
+                scroll.appendChild(card);
+            });
+        }
+
+        // Services / talents (défilement) générés depuis les profils
+        function actualiserServices() {
+            const track = document.getElementById('servicesTrack');
+            if (!track) return;
+            const items = membres
+                .filter(m => m.service && m.service !== 'À définir')
+                .map(m => `<div class="service-item">🛠️ <strong>${esc(m.nom)}</strong> – ${esc(m.service)} ${session ? ' • 📞 ' + esc(m.tel) : ''}</div>`)
+                .join('');
+            // Dupliquer pour boucle fluide
+            track.innerHTML = items + items;
+        }
+
+        function filtrerMembres() {
+            const q = document.getElementById('searchMembre').value.toLowerCase().trim();
+            if (!q) {
+                afficherMembres();
+                return;
+            }
+            const filtres = membres.filter(m =>
+                m.nom.toLowerCase().includes(q) ||
+                m.role.toLowerCase().includes(q) ||
+                m.service.toLowerCase().includes(q) ||
+                m.tel.includes(q)
+            );
+            afficherMembres(filtres);
+        }
+
+        function ouvrirProfil(m, couleur) {
+            const info = getInfoAnniversaire(m.anniv);
+            let annivExtra = '';
+            if (info) {
+                if (info.estAujourdhui) {
+                    annivExtra = ' <span style="color:#db2777; font-weight:700;">🎉 C\'est aujourd\'hui !</span>';
+                } else {
+                    annivExtra = ` <span style="color:#65a30d;">(dans ${info.jours} jour${info.jours > 1 ? 's' : ''})</span>`;
+                }
+            }
+            const avatarStyle = m.photo
+                ? `background:url('${urlSure(m.photo)}') center/cover; width:90px; height:90px; margin:0 auto 12px; border:3px solid #86efac;`
+                : `background:${couleur}; width:90px; height:90px; font-size:1.6rem; margin:0 auto 12px;`;
+            const avatarContent = m.photo ? '' : initiales(m.nom);
+            const body = document.getElementById('profilDetailBody');
+            body.innerHTML = `
+                <div style="text-align:center; margin-bottom:18px;">
+                    <div class="member-avatar" style="${avatarStyle}">${avatarContent}</div>
+                    <h3 style="color:#14532d; font-size:1.3rem; margin-bottom:4px;">${esc(m.nom)}</h3>
+                    <p style="color:#4d7c0f; font-weight:600;">${esc(m.role)}</p>
+                </div>
+                <div style="background:#f0fdf4; border-radius:14px; padding:16px; margin-bottom:14px;">
+                    <p style="margin-bottom:8px;"><strong>🎂 Anniversaire :</strong> ${esc(m.anniv)}${annivExtra}</p>
+                    <p style="margin-bottom:8px;"><strong>📞 Téléphone :</strong> ${session ? esc(m.tel) : '🔒 Connectez-vous'}</p>
+                    <p style="margin-bottom:8px;"><strong>🛠️ Talent / Service :</strong> ${esc(m.service)}</p>
+                    <p><strong>💰 Cotisation :</strong> <span style="color:${m.cotisation === 'À jour' ? '#16a34a' : '#dc2626'}; font-weight:700;">${m.cotisation}</span></p>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                    ${session ? `<a class="btn-primary" style="padding:10px 18px; font-size:0.88rem; text-decoration:none; display:inline-block;" href="tel:${esc(m.tel.replace(/\s/g,''))}">📞 Appeler</a>` : ''}
+                    ${session ? `<a class="btn-primary" style="padding:10px 18px; font-size:0.88rem; text-decoration:none; display:inline-block;" href="sms:${esc(m.tel.replace(/\s/g,''))}">💌 Message</a>` : ''}
+
+                </div>
+            `;
+            document.getElementById('profilDetail').style.display = 'flex';
+            const bs = document.getElementById('btnSupprMembre'); bs.style.display = aRole('bureau') ? 'block' : 'none'; bs.onclick = () => supprimerMembre(m.id);
+            const bm = document.getElementById('btnModifMembre'); bm.style.display = (aRole('bureau') || (session && session.cle === String(m.id))) ? 'block' : 'none'; bm.onclick = () => modifierMembre(m.id);
+        }
+
+        function fermerProfil() {
+            document.getElementById('profilDetail').style.display = 'none';
+        }
+
+        // ==================== NOM DE LA FAMILLE (modifiable à tout moment) ====================
+        const NOM_FAMILLE_DEFAUT = 'Notre Belle Famille';
+
+        function getNomFamille() {
+            return localStorage.getItem('nomFamille') || NOM_FAMILLE_DEFAUT;
+        }
+
+        function appliquerNomFamille(nom) {
+            const n = (nom || NOM_FAMILLE_DEFAUT).trim() || NOM_FAMILLE_DEFAUT;
+
+            // Menu latéral (le ::before emoji reste via CSS)
+            const sidebar = document.getElementById('sidebarTitle');
+            if (sidebar) sidebar.textContent = n;
+
+            // Titre principal de l'app
+            const appTitle = document.getElementById('appTitle');
+            if (appTitle) appTitle.textContent = n + ' – Joie & Union';
+
+            // Titre de l'onglet navigateur
+            document.title = n + ' – Joie, Paix & Union';
+
+            // Bandeau d'installation PWA
+            const installBanner = document.getElementById('installBanner');
+            if (installBanner) installBanner.textContent = '🏡 Installer « ' + n + ' » sur votre écran d’accueil';
+
+            // Champ dans les paramètres
+            const input = document.getElementById('inputNomFamille');
+            if (input && document.activeElement !== input) input.value = n;
+
+            // Feedback
+            const fb = document.getElementById('nomFamilleFeedback');
+            if (fb) {
+                fb.style.display = 'none';
+            }
+        }
+
+        function enregistrerNomFamille() {
+            const input = document.getElementById('inputNomFamille');
+            let nom = (input ? input.value : '').trim();
+            if (!nom) {
+                toast('Veuillez entrer un nom pour la famille ❤️');
+                return;
+            }
+            if (nom.length > 40) {
+                toast('Le nom est un peu trop long (max 40 caractères).');
+                return;
+            }
+            if (!aRole('bureau')) { toast('🔒 Réservé au bureau de la famille.'); return; }
+            localStorage.setItem('nomFamille', nom);
+            appliquerNomFamille(nom);
+
+            const fb = document.getElementById('nomFamilleFeedback');
+            if (fb) {
+                fb.textContent = '✅ Nom mis à jour partout : « ' + nom + ' »';
+                fb.style.display = 'block';
+            }
+            // Petite confirmation
+            setTimeout(() => toast('✅ Le nom de la famille est maintenant : « ' + nom + ' »\nIl apparaît partout dans l’application.'), 100);
+        }
+
+        function ouvrirModifNomFamille() {
+            // Raccourci : cliquer sur le titre du menu ouvre les paramètres + focus
+            switchView('parametresView');
+            // Activer l'item de menu Paramètres
+            document.querySelectorAll('.pc-nav-item').forEach(i => i.classList.remove('active'));
+            const items = document.querySelectorAll('.pc-nav-item');
+            items.forEach(i => {
+                if (i.textContent.includes('Paramètres')) i.classList.add('active');
+            });
+            setTimeout(() => {
+                const input = document.getElementById('inputNomFamille');
+                if (input) {
+                    input.value = getNomFamille();
+                    input.focus();
+                    input.select();
+                }
+            }, 100);
+        }
+
+        // ==================== ÉVÉNEMENTS / CALENDRIER ====================
+        let evenements = [
+            { id: 1, titre: 'Réunion de préparation fête de fin d\'année', date: '22/12/2026', desc: 'Organisation de la fête familiale. Lieu : domicile du Président.', tag: 'Réunion' },
+            { id: 2, titre: 'Fête de fin d\'année', date: '28/12/2026', desc: 'Grande célébration avec toute la famille. Apportez un plat !', tag: 'Fête' },
+            { id: 3, titre: 'Assemblée générale annuelle', date: '15/01/2027', desc: 'Bilan de l\'année et élection du bureau si nécessaire.', tag: 'AG' },
+            { id: 4, titre: 'Journée de nettoyage communautaire', date: '08/02/2027', desc: 'Action solidaire dans le quartier.', tag: 'Solidarité' }
+        ];
+        evenements = lire('evenements', evenements);
+
+        evenements = lire('evenements', evenements);
+
+        function afficherEvenements() {
+            const list = document.getElementById('eventsList');
+            if (!list) return;
+            majVisio();
+            const selC = document.getElementById('eventCollecteur');
+            if (selC && selC.options.length !== membres.length) selC.innerHTML = optionsCollecteur();
+            // Trier par date
+            const parses = evenements.map(e => {
+                const p = e.date.split('/');
+                const d = new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+                return { ...e, _d: d };
+            }).sort((a, b) => a._d - b._d);
+
+            list.innerHTML = parses.map(e => {
+                const p = e.date.split('/');
+                const moisCourt = moisNoms[parseInt(p[1], 10) - 1] || p[1];
+                return `
+                    <div class="event-card" style="${e._d < new Date(new Date().setHours(0,0,0,0)) ? 'opacity:.55' : ''}">
+                        <div class="event-date-badge">
+                            <span class="jour">${p[0]}</span>
+                            <span class="mois">${moisCourt}</span>
+                        </div>
+                        <div class="event-info">
+                            <h4>${esc(e.titre)}</h4>
+                            <p>${esc(e.desc)}</p>
+                            <span class="event-tag">${esc(e.tag || 'Événement')}</span><button class="btn-primary" style="padding:4px 12px;font-size:.75rem;background:#3b82f6;margin-left:8px" onclick="exporterICS(${e.id})">📅 Agenda</button>${e.visio ? `<button class="btn-primary" style="padding:4px 12px;font-size:.75rem;background:#16a34a;margin-left:8px" onclick="rejoindreEvenement(${e.id})">📹 Rejoindre</button>` : (aRole('bureau') ? `<button class="btn-primary" style="padding:4px 12px;font-size:.75rem;background:#16a34a;margin-left:8px" onclick="activerVisio(${e.id})">📹 Activer la vidéo</button>` : '')}${aRole('bureau') ? `<button class="btn-primary" style="padding:4px 12px;font-size:.75rem;background:#94a3b8;margin-left:8px" aria-label="Supprimer" onclick="supprimerEvenement(${e.id})">🗑</button><button class="btn-primary" style="padding:4px 12px;font-size:.75rem;background:#3b82f6;margin-left:8px" aria-label="Modifier" onclick="modifierEvenement(${e.id})">✏️</button>` : ''}
+                            ${blocParticipation(e)}${blocCompteRendu(e)}${blocCotisation(e)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function ajouterEvenement() {
+            if (!aRole('bureau')) { toast('🔒 Réservé au bureau de la famille.'); return; }
+            const titre = document.getElementById('eventTitre').value.trim();
+            const date = document.getElementById('eventDate').value.trim();
+            const desc = document.getElementById('eventDesc').value.trim() || 'Aucun détail.';
+            if (!titre || !date) {
+                toast('Titre et date sont obligatoires.');
+                return;
+            }
+            if (!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(date)) {
+                toast('Format de date : JJ/MM/AAAA');
+                return;
+            }
+            const pd = date.split('/').map(Number);
+            if (new Date(pd[2], pd[1]-1, pd[0]).getMonth() !== pd[1]-1) { toast('Date inexistante.'); return; }
+            const montant = parseInt(document.getElementById('eventMontant').value, 10) || 0;
+            const ev = { id: Date.now(), maj: Date.now(), titre, date, desc, tag: 'Événement' };
+            if (montant > 0) ev.cot = nouvelleCot(montant, document.getElementById('eventCollecteur').value);
+            if (document.getElementById('eventVisio').checked) ev.visio = true;
+            const edit = !!editEvtId;
+            if (edit) { const c = evenements.find(x => x.id === editEvtId); Object.assign(c, { titre, date, desc, maj: Date.now() }); editEvtId = null; } else evenements.push(ev);
+            document.getElementById('eventVisio').checked = false;
+            document.getElementById('eventMontant').value = '';
+            saveAll();
+            document.getElementById('eventTitre').value = '';
+            document.getElementById('eventDate').value = '';
+            document.getElementById('eventDesc').value = '';
+            document.getElementById('addEventForm').style.display = 'none';
+            afficherEvenements();
+            toast(edit ? '✅ Événement modifié.' : '✅ Événement ajouté au calendrier de la famille !');
+        }
+
+        // ==================== MODE SOMBRE ====================
+        function isDarkMode() {
+            const v = localStorage.getItem('darkMode'); return v === null ? matchMedia('(prefers-color-scheme: dark)').matches : v === '1';
+        }
+
+        function appliquerDarkMode() {
+            const on = isDarkMode();
+            document.body.classList.toggle('dark-mode', on);
+            const btn = document.getElementById('btnDarkMode');
+            if (btn) btn.textContent = on ? '☀️ Revenir au mode clair' : '🌙 Activer le mode sombre';
+        }
+
+        function toggleDarkMode() {
+            localStorage.setItem('darkMode', isDarkMode() ? '0' : '1');
+            appliquerDarkMode();
+        }
+
+        // ==================== EXPORT MEMBRES (CSV) ====================
+        function exporterMembres() {
+            if (!session) { toast('🔒 Connectez-vous pour exporter.'); return; }
+            const header = 'Nom;Rôle;Anniversaire;Téléphone;Service;Cotisation\n';
+            const q = v => '"' + String(v ?? '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""') + '"';
+            const rows = membres.map(m => [m.nom, m.role, m.anniv, m.tel, m.service, m.cotisation].map(q).join(';')).join('\n');
+            const blob = new Blob(['\ufeff' + header + rows], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (getNomFamille().replace(/\s+/g, '_')) + '_membres.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            toast('📥 Liste des membres exportée en CSV !');
+        }
+
+        // ==================== RAPPEL ANNIVERSAIRE AU CHARGEMENT ====================
+        function rappelAnniversaireSiBesoin() {
+            const aujourdhui = membres.filter(m => {
+                const info = getInfoAnniversaire(m.anniv);
+                return info && info.estAujourdhui;
+            });
+            if (aujourdhui.length === 0) return;
+            // Éviter de spammer à chaque rechargement dans la même session
+            const key = 'rappelAnniv_' + new Date().toDateString();
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, '1');
+            const noms = aujourdhui.map(m => m.nom).join(', ');
+            setTimeout(() => {
+                toast(`🎂 JOYEUX ANNIVERSAIRE !\n\nAujourd'hui nous célébrons :\n${esc(noms)}\n\nN'oubliez pas de leur souhaiter une belle journée ❤️🎉`);
+            }, 800);
+        }
+
+        // Mettre à jour afficherMembres pour supporter photo URL
+                const afficherMembres = function(liste = membres) {
+            liste = [...liste].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+            const grid = document.getElementById('membersGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            liste.forEach((m, i) => {
+                const couleur = couleursAvatar[i % couleursAvatar.length];
+                const info = getInfoAnniversaire(m.anniv);
+                const card = document.createElement('div');
+                card.className = 'member-card';
+                card.setAttribute('role', 'button'); card.tabIndex = 0; card.setAttribute('aria-label', 'Voir le profil de ' + m.nom);
+                card.onclick = () => ouvrirProfil(m, couleur);
+                let badgeAnniv = '';
+                if (info && info.estAujourdhui) {
+                    badgeAnniv = '<span class="member-badge" style="background:#fce7f3; color:#db2777;">🎂 Aujourd\'hui !</span>';
+                }
+                const avatarHtml = m.photo
+                    ? `<div class="member-avatar" style="background:url('${urlSure(m.photo)}') center/cover; border:3px solid #86efac;"></div>`
+                    : `<div class="member-avatar" style="background:${couleur}">${initiales(m.nom)}</div>`;
+                card.innerHTML = `
+                    ${avatarHtml}
+                    <h4>${esc(m.nom)}</h4>
+                    <div class="member-role">${esc(m.role)}</div>
+                    <div class="member-meta">
+                        <span>🎂 ${esc(m.anniv)}${info && info.estAujourdhui ? ' 🎉' : ''}</span>
+                        <span>🛠️ ${esc(m.service)}</span>
+                    </div>
+                    <span class="member-badge">${m.cotisation === 'À jour' ? '✅ Cotisation OK' : '⚠️ Cotisation en retard'}</span>
+                    ${badgeAnniv}
+                `;
+                grid.appendChild(card);
+            });
+        };
+
+        // Étendre ajouterMembre pour la photo
+                const ajouterMembre = function() {
+            const nom = document.getElementById('newNom').value.trim();
+            const role = document.getElementById('newRole').value.trim() || 'Membre';
+            const anniv = document.getElementById('newAnniv').value.trim() || '—';
+            const tel = document.getElementById('newTel').value.trim() || 'Non renseigné';
+            const service = document.getElementById('newService').value.trim() || 'À définir';
+            const photo = urlSure(((document.getElementById('newPhoto') || {}).value || '').trim());
+            if (!aRole('bureau') && !(editId && session && String(editId) === session.cle)) { toast('🔒 Réservé au bureau de la famille.'); return; }
+
+            if (!nom) {
+                toast('Veuillez indiquer le nom du membre ❤️');
+                return;
+            }
+            if (anniv !== '—' && (!/^\d{1,2}\/\d{1,2}$/.test(anniv) || !getInfoAnniversaire(anniv))) {
+                toast('Format de date invalide. Utilisez JJ/MM (ex: 15/11)');
+                return;
+            }
+
+            const groupe = (document.getElementById('newGroupe') || {}).value || 'jeunes';
+            const edition = !!editId;
+            if (edition) {
+                const cible = membres.find(x => x.id === editId);
+                Object.assign(cible, { nom, role, anniv, tel, service, groupe, maj: Date.now() }); if (photo) cible.photo = photo; editId = null;
+            } else membres.push({ id: Date.now(), maj: Date.now(), nom, role, anniv, tel, service, cotisation: 'À jour', photo, groupe });
+            saveAll();
+
+            afficherMembres();
+            actualiserAnniversaires();
+            actualiserServices();
+
+            ['newNom','newRole','newAnniv','newTel','newService','newPhoto'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('addMemberForm').style.display = 'none';
+
+            const info = getInfoAnniversaire(anniv);
+            let msg = edition ? `✅ Profil de ${nom} mis à jour.` : `✅ ${nom} a été ajouté(e) à la famille avec amour ! ❤️`;
+            if (info && info.estAujourdhui) {
+                msg += `\n\n🎂 C'est son anniversaire aujourd'hui !`;
+            }
+            toast(msg);
+        };
+
+        // Rafraîchit tout
+        function rafraichirTout() {
+            verifierMois(); initCloud(); rappels(); majTicker();
+            document.querySelectorAll('.pc-nav-item').forEach(n => { n.setAttribute('role', 'button'); n.tabIndex = 0; });
+            if (/iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone && !localStorage.getItem('iosVu')) document.getElementById('installBanner').style.display = 'block';
+            majStats(); appliquerSession(); majMessages();
+            appliquerNomFamille(getNomFamille());
+            appliquerDarkMode();
+            afficherMembres();
+            actualiserAnniversaires();
+            actualiserServices();
+            afficherEvenements();
+            rappelAnniversaireSiBesoin();
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', rafraichirTout);
+    </script>
+
+</body>
+</html>

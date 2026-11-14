@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "Notre Belle Famille",
+  "short_name": "Famille",
+  "description": "Annuaire, anniversaires, calendrier et cotisations de la famille",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fefce8",
+  "theme_color": "#166534",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
