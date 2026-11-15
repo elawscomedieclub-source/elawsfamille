@@ -1,127 +1,69 @@
-# Notre Belle Famille – mise en ligne et synchronisation
+# Notre Belle Famille – version serveur (Vercel + base de données Postgres)
 
-## 1. Mise en ligne (HTTPS obligatoire pour le micro et l'installation)
-Déposez tous les fichiers sur Netlify, Vercel, GitHub Pages ou Render (site statique).
+Application web installable (PWA) pour la famille : annuaire, anniversaires, calendrier, cotisations et caisse,
+messages et vocaux, sondages, élections, réunions vidéo. Les données sont dans une **vraie base de données** ;
+toutes les règles de sécurité sont vérifiées **par le serveur**, pas par le téléphone.
 
-## 2. Synchronisation entre téléphones (Firebase, gratuit)
-1. console.firebase.google.com : créer un projet, ajouter une application Web, copier `firebaseConfig`.
-2. Dans index.html, remplacer `const FIREBASE_CONFIG = null;` par `const FIREBASE_CONFIG = { ... };`.
-3. Authentication > Sign-in method : activer « Anonyme ».
-4. Firestore Database (mode production) > Règles :
+## 1. Mise en ligne (une seule fois, environ 10 minutes)
+1. Déposez ce dossier sur GitHub (les fichiers à la racine : `index.html`, `api/`, `lib/`, `package.json`, `vercel.json`…).
+2. Sur vercel.com : « Add New > Project », choisissez le dépôt, puis « Deploy ».
+3. Dans le projet Vercel : onglet **Storage** > « Create Database » > **Neon (Postgres)** > connectez-la au projet.
+   Vercel ajoute tout seul la variable `DATABASE_URL`. Les tables se créent automatiquement.
+4. Onglet **Settings > Environment Variables**, ajoutez :
+   - `SESSION_SECRET` : une longue phrase aléatoire (40 caractères ou plus). Elle signe les connexions. Ne la partagez jamais.
+   - `ADMIN_INITIAL_CODE` : un code de départ pour l'administrateur (8 caractères minimum).
+   - `FAMILY_TZ` (facultatif) : fuseau horaire, par exemple `Africa/Lome` ou `Europe/Paris`.
+5. Onglet **Deployments** : « Redeploy » pour prendre en compte les variables.
 
-       rules_version = '2';
-       service cloud.firestore {
-         match /databases/{db}/documents {
-           match /familles/{code} {
-             allow get, create, update: if request.auth != null && code.size() >= 16;
-             allow list, delete: if false;
-           }
-         }
-       }
+## 2. Premiers pas
+1. Ouvrez le site, connectez-vous avec le nom **Administrateur** et le code `ADMIN_INITIAL_CODE`.
+   L'application vous oblige aussitôt à choisir votre vrai code secret (8 caractères minimum).
+   Ensuite `ADMIN_INITIAL_CODE` ne sert plus : vous pouvez le changer ou le supprimer dans Vercel.
+2. Allez dans « Annuaire > Ajouter un membre » : à chaque ajout, un **code provisoire** s'affiche une seule fois.
+   Remettez-le au membre : il se connecte avec son nom + ce code, puis choisit son propre code.
+3. Ouvrez la fiche d'un membre pour lui donner son **titre et son rôle** (Président, Secrétaire, Trésorier, membre du bureau).
+4. Le nom de la famille se règle dans Paramètres (bureau et administrateur).
 
-5. Storage (vocaux) > Règles :
+## 3. Qui peut quoi (vérifié par le serveur)
+| Action | Qui |
+|---|---|
+| Voir les données de la famille | Tout membre connecté (un visiteur ne voit rien) |
+| Ajouter un membre, nom de la famille, événements, sondages, élections, annonces | Bureau et administrateur |
+| Modifier son propre profil et son code | Chaque membre |
+| Donner un titre ou un rôle, nommer un élu, retirer un membre du bureau | Administrateur seulement |
+| Caisse (cotisations, dépenses) | Trésorier (et Président) |
+| Annuler une opération de caisse | Demande du Trésorier + **3 approbations** de membres du bureau |
+| Voir une liste de cotisation d'événement masquée | Collecteur, Trésorier, Président |
+| Élire | Tous les membres votent ; l'administrateur nomme l'élu |
 
-       rules_version = '2';
-       service firebase.storage {
-         match /b/{bucket}/o {
-           match /familles/{code}/audios/{f} {
-             allow read: if request.auth != null;
-             allow write: if request.auth != null && request.resource.size < 5 * 1024 * 1024
-                          && request.resource.contentType.matches('audio/.*');
-           }
-         }
-       }
+## 4. Sécurité mise en place
+- Connexions vérifiées sur le serveur ; mots de passe chiffrés (scrypt) ; jamais envoyés ni stockés en clair.
+- Session dans un cookie `HttpOnly` + `Secure` + `SameSite=Strict` (illisible par JavaScript) ; droits relus dans la base à chaque requête :
+  un changement de rôle ou un code réinitialisé prend effet immédiatement.
+- Blocage de 5 minutes après 5 mauvais codes ; code provisoire obligatoirement changé à la première connexion.
+- Votes secrets : le serveur n'envoie jamais qui a voté quoi.
+- Listes de cotisation masquées : les données masquées ne quittent même pas le serveur.
+- En-têtes de sécurité et politique CSP dans `vercel.json` ; aucun accès sans connexion.
+- Aucun mot de passe de départ n'existe dans le code : l'administrateur est créé avec `ADMIN_INITIAL_CODE` (variable secrète).
+- Réinitialiser l'administrateur (code perdu) : dans la console Neon, exécutez `DELETE FROM comptes WHERE cle = 'admin';`
+  puis reconnectez-vous avec `ADMIN_INITIAL_CODE`.
 
-6. Déployer. Dans Paramètres > « Synchronisation famille », le bureau clique sur « Générer », enregistre le code,
-   puis envoie à la famille le lien `https://votre-site/#code=LE_CODE`. Le lien règle tout automatiquement.
+## 5. Mise à jour en direct
+L'application interroge le serveur toutes les 8 secondes (et dès qu'on revient sur l'onglet) :
+ce que fait le bureau apparaît chez tous les membres en quelques secondes. Chaque action personnelle est visible tout de suite chez soi.
 
-## Sécurité : ce que cela protège
-Le code famille est un secret long : sans lui, personne ne peut lire les données, même en connaissant la config.
-Ne le publiez pas. Pour aller plus loin : Firebase App Check. Si le code fuite, générez-en un nouveau.
+## 6. Réunions vidéo (Jitsi Meet)
+Menu « Réunion vidéo » ou bouton « Rejoindre » sur un événement. La salle est privée (nom secret généré par le serveur,
+visible seulement des membres connectés). Par défaut la réunion s'ouvre sur meet.jit.si dans un nouvel onglet ; la première
+personne qui la lance doit se connecter à un compte (Google, GitHub…). Pour l'afficher dans l'application, installez votre propre
+serveur Jitsi puis réglez `const VISIO = { domaine: '...', integre: true }` dans `index.html`.
 
-## Fonctions de l'application
-Annuaire (ajout, modification, suppression, photo depuis le téléphone), anniversaires automatiques, calendrier
-(export vers l'agenda du téléphone), cotisations et dépenses, messages texte et vocaux, annonces du secrétaire,
-suggestions au président, rappels à l'ouverture, mode sombre automatique, sauvegarde JSON, installation sur l'écran d'accueil.
-Les notifications fonctionnent à l'ouverture de l'application (pas de notification quand elle est fermée).
+## 7. Limites à connaître
+- Les vocaux sont enregistrés dans la base (maximum environ 1 Mo, soit quelques minutes). Neon gratuit : 0,5 Go de stockage.
+- La mise à jour « en direct » est une interrogation régulière, pas une connexion permanente : un délai de quelques secondes est normal.
+- Les notifications de rappel s'affichent à l'ouverture de l'application (il n'y a pas de notification quand elle est fermée).
+- Changement de serveur ou de base : exportez d'abord une sauvegarde (Administrateur > « Sauvegarde (JSON) »).
 
-## Cotisations d'événement (Aînés / Jeunes)
-- Chaque membre a un groupe (Aînés ou Jeunes), modifiable dans son profil.
-- Le bureau ouvre une cotisation sur un événement (montant par personne + collecteur), à la création ou plus tard.
-- Le collecteur (ou le Trésorier / Président) enregistre les versements et peut afficher ou masquer, séparément,
-  la liste des Aînés et celle des Jeunes. Quand une liste est masquée, les autres membres voient seulement
-  « Liste masquée par le collecteur » ; le total général de l'événement reste visible.
-- Ces cotisations sont suivies par événement, séparément de la caisse générale.
-
-## Réunion en vidéo (Jitsi Meet)
-- Menu « 📹 Réunion vidéo » : « Réunion de famille maintenant », ou bouton « Rejoindre » sur un événement
-  (le bureau coche « Réunion en vidéo » à la création, ou clique « Activer la vidéo » sur un événement existant).
-- Seuls les membres connectés peuvent entrer ; leur nom s'affiche dans la réunion.
-- La salle est privée : son nom contient le code famille (Paramètres > Synchronisation famille). Définissez ce code
-  d'abord, sur chaque appareil (le lien `#code=...` le règle automatiquement).
-- Par défaut (`VISIO.integre = false`), la réunion s'ouvre dans un nouvel onglet sur meet.jit.si, gratuit et sans
-  installation. Le serveur public demande à la première personne qui lance la réunion de se connecter (Google, GitHub…) :
-  elle devient l'animateur, les autres entrent directement.
-- Pour afficher la visio DANS l'application, il faut votre propre serveur Jitsi (guide « Self-hosting » sur jitsi.github.io,
-  un petit serveur Linux suffit), puis dans index.html : `const VISIO = { domaine: 'visio.votre-site.com', integre: true };`.
-  Le serveur public meet.jit.si limite l'affichage intégré à 5 minutes, c'est pourquoi il n'est pas utilisé ainsi.
-
-## Finitions de cette version
-- Guide d'utilisation intégré (menu « ❓ Guide d'utilisation »), message d'accueil personnalisé.
-- Le statut de cotisation « À jour » repart à zéro chaque mois ; journal de la caisse pour le Trésorier.
-- Chaque membre peut changer son code secret ; l'administrateur peut télécharger et restaurer une sauvegarde complète.
-- Navigation au clavier, meta de partage, message si JavaScript est désactivé.
-
-## Événements : participation et modification
-- Chaque membre connecté peut confirmer sa présence (« Je participe ») ; le nombre et la liste des participants s'affichent.
-- Le bureau peut modifier un événement (✏️) en plus de l'ajouter ou le supprimer.
-
-## Erreur de caisse : annulation à 3 approbations
-- Le Trésorier (ou le Président) indique le motif et touche ↩ à côté de l'opération dans le journal de la caisse.
-- La demande compte comme la 1re approbation ; 2 autres membres du bureau (Président, Secrétaire, Trésorier, adjoints
-  compris) doivent approuver dans « 🛡️ Validations du bureau ». Chaque personne ne vote qu'une fois.
-- À la 3e approbation, l'opération est annulée automatiquement (caisse corrigée, trace conservée dans le journal,
-  cotisation du membre remise « En retard »). L'administrateur ne peut pas voter à la place du bureau.
-- Il faut au moins 3 membres ayant une fonction au bureau (champ « Rôle » du profil : Président, Secrétaire, Trésorier).
-- Les comptes rendus de réunion s'ajoutent sur chaque événement (bureau).
-
-## Sondages
-Le bureau publie une question avec 2 à 6 choix (menu « 🗳️ Sondages »). Chaque membre connecté vote une fois et peut
-changer son vote jusqu'à la clôture. Les résultats s'affichent en pourcentages, sans les noms.
-
-## Fichiers _headers et vercel.json
-Sur Vercel, c'est `vercel.json` qui s'applique (même rôle que `_headers`, utilisé par Netlify et Cloudflare Pages).
-
-## Fichier _headers
-Sur Netlify ou Cloudflare Pages, le fichier `_headers` ajoute des protections (interdiction d'intégrer le site dans
-un autre site, pas de détection de type de fichier) et empêche la mise en cache du fichier `sw.js`. Sur un autre
-hébergeur, il peut être ignoré sans conséquence.
-
-## Bureau, postes, codes et élections
-- **Qui peut quoi** : seuls les membres du bureau (tout membre ayant un poste) et l'administrateur ajoutent des membres,
-  modifient le nom de la famille (partagé entre tous les appareils), créent des événements et des sondages.
-- **Codes provisoires** : quand le bureau ou l'administrateur ajoute un membre, un code provisoire de 8 caractères
-  s'affiche une seule fois. Le membre se connecte avec, puis doit choisir son propre code (6 caractères minimum)
-  avant de continuer. Le bureau peut redonner un code provisoire à un membre simple (fiche du membre > « 🔑 Code
-  provisoire ») ; seul l'administrateur le fait pour un membre du bureau.
-  L'administrateur dispose aussi de « Générer les codes provisoires manquants » (à utiliser une fois pour les membres
-  d'exemple ou existants : aucun membre ne peut plus créer lui-même son code).
-- **Titres et rôles** : seul l'administrateur donne un titre (texte libre : Vice-président, Conseiller…) et un rôle
-  (membre simple, membre du bureau, Secrétaire, Trésorier, Président) depuis la fiche du membre. Il peut les modifier
-  ou les retirer à tout moment.
-- **Élections** : le bureau ouvre une élection (Sondages > « Ouvrir une élection ») avec le poste et 2 à 8 candidats.
-  Tous les membres votent (l'administrateur, qui n'est pas un membre, ne vote pas). Après la clôture, l'administrateur
-  nomme l'élu(e) en lui donnant son rôle ; en cas d'égalité, il faut relancer une élection.
-- **Limite honnête** : tout est contrôlé dans l'application (pas de serveur de comptes). Cela protège contre les
-  accès ordinaires, pas contre une personne technique de la famille qui voudrait contourner le système.
-
-## Premiers pas après la mise en ligne
-1. Connectez-vous en « Administrateur » (ajoutez ?admin à l'adresse) : le premier code saisi est conservé.
-2. Dans l'espace administrateur, cliquez « Générer les codes provisoires manquants », notez les codes et remettez-les
-   à chaque membre : chacun choisit ensuite son propre code à sa première connexion.
-3. Remplacez les membres d'exemple par les vrais (Annuaire), puis activez la synchronisation (section 2).
-
-## Fonctionnement
-- Fusion automatique (plus de « dernier qui écrit écrase tout ») : les ajouts de chacun sont conservés ; les suppressions sont propagées.
-- Les caisses (cotisations/dépenses) : en cas de modification simultanée, la plus récente l'emporte.
-- Les codes personnels (connexion) sont maintenant synchronisés (sous forme chiffrée) entre les appareils.
+## 8. Développement local (facultatif)
+`node --no-warnings test/backend.js` lance 82 vérifications du serveur sur une base SQLite temporaire. `node test/local-server.js`
+démarre le site sur http://localhost:8099 avec les mêmes règles (administrateur : `AdminInit1`).

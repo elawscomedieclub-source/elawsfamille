@@ -1,0 +1,8 @@
+{
+  "name": "notre-belle-famille",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Application de la famille : annuaire, événements, caisse, messages, sondages, élections.",
+  "engines": { "node": ">=20" },
+  "dependencies": { "pg": "^8.11.3" }
+}

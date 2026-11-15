@@ -1221,13 +1221,6 @@
                     <button class="btn-primary" onclick="activerRappels()">Activer les notifications</button>
                 </div>
 
-                <div class="stat-card" style="max-width:520px; margin-bottom:22px;">
-                    <h4 style="color:#14532d; margin-bottom:12px;">☁️ Synchronisation famille</h4>
-                    <p style="font-size:0.85rem; margin-bottom:12px;">Même code famille sur tous les téléphones = mêmes données. Le bureau peut en générer un.</p>
-                    <div class="form-group" style="margin-bottom:12px;"><label for="inputCode">Code famille</label><input type="text" id="inputCode" autocomplete="off" placeholder="24 lettres/chiffres"></div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn-primary" onclick="enregistrerCode()">Enregistrer</button><button class="btn-primary" style="background:#3b82f6" onclick="genererCode()">Générer</button></div>
-                </div>
-
                 <div class="history-card green" style="max-width:520px;">
                     <h4>💡 Astuce</h4>
                     <p>Vous pouvez aussi cliquer directement sur le nom en haut du menu latéral pour le modifier rapidement.</p>
@@ -1242,9 +1235,6 @@
                     <p style="color: #4c1d95;">Accès réservé. Vous pouvez gérer les membres, les rôles et les paramètres de l'application ici.</p>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
                         <button class="btn-primary" onclick="sauvegarder()">💾 Sauvegarde (JSON)</button>
-                        <button class="btn-primary" style="background:#dc2626" onclick="reinitialiserCodes()">🔑 Réinitialiser les codes membres</button>
-                        <input type="file" id="fichierSauvegarde" accept=".json" style="display:none" onchange="restaurer(this)">
-                        <button class="btn-primary" style="background:#3b82f6" onclick="document.getElementById('fichierSauvegarde').click()">📥 Restaurer une sauvegarde</button>
                         <button class="btn-primary" style="background:#f59e0b" onclick="genererTousCodes()">🔑 Générer les codes provisoires manquants</button>
                     </div>
                 </div>
@@ -1467,6 +1457,7 @@
             return p.includes(r);
         }
         function peutVoir(v) {
+            if (!session) return v === 'loginView' || v === 'aideView';
             const need = { secretaireView: 'secretaire', tresorierView: 'tresorier', presidentView: 'president', adminView: 'admin' };
             if (v === 'espaceMembreView' || v === 'visioView' || v === 'sondagesView') return !!session;
             if (v === 'approbationsView') return estBureau() || (!!session && session.perms.includes('admin'));
@@ -1690,7 +1681,7 @@
                     <button class="btn-primary" style="padding:6px 14px;font-size:.8rem" onclick="ouvrirCotisation(${e.id})">Ouvrir</button></div></details>`;
             }
             const c = e.cot, col = membres.find(m => m.id === c.collecteur), chef = estCollecteur(e);
-            const total = c.versements.reduce((t, v) => t + v.montant, 0);
+            const total = c.total != null ? c.total : c.versements.reduce((t, v) => t + v.montant, 0);
             const groupes = ['aines', 'jeunes'].map(g => {
                 const vs = c.versements.filter(v => v.groupe === g), tg = vs.reduce((t, v) => t + v.montant, 0), vis = c.visible[g];
                 const bouton = chef ? `<button class="btn-primary" style="padding:3px 10px;font-size:.72rem;background:#6366f1;margin-left:6px" onclick="basculerListe(${e.id},'${g}')">${vis ? '🙈 Masquer' : '👁 Afficher'}</button>` : '';
@@ -2570,7 +2561,7 @@
         };
 
         // Étendre ajouterMembre pour la photo
-                const ajouterMembre = function() {
+                var ajouterMembre = function() {
             const nom = document.getElementById('newNom').value.trim();
             const role = document.getElementById('newRole').value.trim() || 'Membre';
             const anniv = document.getElementById('newAnniv').value.trim() || '—';
@@ -2617,7 +2608,7 @@
 
         // Rafraîchit tout
         function rafraichirTout() {
-            verifierMois(); initCloud(); rappels(); majTicker();
+            demarrerServeur(); majTicker();
             document.querySelectorAll('.pc-nav-item').forEach(n => { n.setAttribute('role', 'button'); n.tabIndex = 0; });
             if (/iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone && !localStorage.getItem('iosVu')) document.getElementById('installBanner').style.display = 'block';
             majStats(); appliquerSession(); majMessages();
@@ -2634,5 +2625,183 @@
         document.addEventListener('DOMContentLoaded', rafraichirTout);
     </script>
 
+
+    <script>
+    // ==================== MODE SERVEUR : base de données + connexions vérifiées côté serveur ====================
+    membres = []; evenements = []; messages = []; annonces = []; suggestions = []; annulations = []; sondages = [];
+    caisse = { recu: 0, depenses: 0, journal: [] };
+    let revServeur = 0, premiereCharge = true, enAttente = null;
+
+    async function api(action, data) {
+        const r = await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ action, ...(data || {}) }) });
+        let j = {}; try { j = await r.json(); } catch (e) {}
+        if (!r.ok) {
+            if (r.status === 401 && session && action !== 'login') { session = null; fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'state' }) }).then(x => x.json()).then(x => x.etat && appliquerServeur(x.etat, true)).catch(() => {}); }
+            throw new Error(j.erreur || 'Erreur ' + r.status);
+        }
+        if (j.etat) appliquerServeur(j.etat, action !== 'state');
+        return j;
+    }
+    async function agir(action, data, msgOk) {
+        try { const j = await api(action, data); if (msgOk) toast(msgOk); return j; } catch (e) { toast('⚠️ ' + e.message); return null; }
+    }
+    function appliquerServeur(e, force) {
+        const a = document.activeElement, cle = e.moi ? e.moi.cle : '';
+        const frappe = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.value && a.closest && a.closest('.form-group, .reponse-ligne, details');
+        if (!force && frappe && cle === (session ? session.cle : '') && !premiereCharge) { enAttente = e; setTimeout(() => { if (enAttente === e) { enAttente = null; appliquerServeur(e, false); } }, 4000); return; }
+        enAttente = null; revServeur = e.rev;
+        membres = e.membres; evenements = e.evenements; messages = e.messages; annonces = e.annonces; suggestions = e.suggestions; caisse = e.caisse; annulations = e.annulations; sondages = e.sondages;
+        session = e.moi ? { cle: e.moi.cle, nom: e.moi.nom, perms: e.moi.perms, prov: e.moi.prov } : null;
+        codeFamille = e.salle || '';
+        if (e.nomFamille) { localStorage.setItem('nomFamille', e.nomFamille); appliquerNomFamille(e.nomFamille); }
+        rafraichirDonnees();
+        if (premiereCharge) { premiereCharge = false; switchView(session ? (session.prov ? 'espaceMembreView' : 'homeView') : 'loginView'); }
+        else if (!session && !['loginView', 'aideView'].includes((document.querySelector('.view.active') || {}).id)) switchView('loginView');
+    }
+    async function sync() {
+        if (document.hidden) return;
+        try {
+            const r = await fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ action: 'state', rev: revServeur, cle: session ? session.cle : '' }) });
+            const j = await r.json(); if (j.etat) appliquerServeur(j.etat, false);
+        } catch (e) {}
+    }
+    function demarrerServeur() {
+        const nr = document.getElementById('newRole'); if (nr && nr.closest('.form-group')) nr.closest('.form-group').style.display = 'none';
+        api('state', { rev: 0, cle: '' }).catch(() => toast('⚠️ Serveur injoignable. Vérifiez votre connexion.'));
+        setInterval(sync, 8000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+    }
+    const valeur = id => ((document.getElementById(id) || {}).value || '');
+    const vider = (...ids) => ids.forEach(i => { const e = document.getElementById(i); if (e) e.value = ''; });
+    const exigeSession = () => { if (!session) { toast('🔒 Connectez-vous pour continuer.'); switchView('loginView'); return false; } return true; };
+
+    // neutralisation de l'ancien mode "local"
+    verifierMois = function () {}; verifierAnnulations = function () {}; initCloud = async function () {}; pousser = function () {};
+    audioOp = async function () { return null; }; urlAudio = async function (id) { return '/api?audio=' + id; };
+    const majStatsLocal = majStats;
+    majStats = function () {
+        majStatsLocal();
+        if (!session) { document.getElementById('statCaisse').textContent = '🔒'; document.getElementById('bilanTexte').textContent = 'Connectez-vous pour consulter le bilan de la famille.'; }
+    };
+
+    // ----- connexion
+    connecterUtilisateur = async function () {
+        const nom = valeur('loginNom'), code = valeur('loginCode');
+        if (!nom.trim() || !code) return toast('Veuillez remplir votre nom et votre code secret !');
+        const j = await agir('login', { nom, code }); if (!j) return;
+        vider('loginCode');
+        const p = session.perms;
+        const cible = session.prov ? 'espaceMembreView' : p.includes('admin') ? 'adminView' : p.includes('president') ? 'presidentView' : p.includes('tresorier') ? 'tresorierView' : p.includes('secretaire') ? 'secretaireView' : 'homeView';
+        document.getElementById('titreMembre').textContent = 'Carnet de : ' + session.nom;
+        switchView(cible);
+        toast(session.prov ? '🔐 Code provisoire : choisissez maintenant votre propre code.' : 'Connexion réussie, bienvenue ' + session.nom + ' ❤️');
+    };
+    deconnecter = async function () { await agir('logout'); switchView('loginView'); toast('À bientôt ❤️'); };
+    changerCode = async function () {
+        if (!exigeSession()) return;
+        const j = await agir('changerCode', { ancien: valeur('ancienCode'), nouveau: valeur('nouveauCode') }, '✅ Code modifié.');
+        if (j) { vider('ancienCode', 'nouveauCode'); if (!session.prov) switchView('homeView'); }
+    };
+    genererCodeProvisoire = async function (id) { const j = await agir('codeProvisoire', { id }); if (j) afficherCodes([{ nom: j.nom, code: j.code }], 'Code provisoire de ' + j.nom); };
+    genererTousCodes = async function () {
+        const j = await agir('codesManquants'); if (!j) return;
+        if (!j.lignes.length) toast('Tous les membres ont déjà un compte actif.'); else afficherCodes(j.lignes, 'Codes provisoires');
+    };
+    sauvegarder = async function () {
+        const j = await agir('export'); if (!j) return;
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(j.donnees, null, 2)], { type: 'application/json' })); a.download = 'sauvegarde_famille.json'; a.click(); URL.revokeObjectURL(a.href);
+    };
+
+    // ----- membres
+    ajouterMembre = async function () {
+        const nom = valeur('newNom').trim(); if (!nom) return toast('Veuillez indiquer le nom du membre ❤️');
+        const data = { nom, anniv: valeur('newAnniv').trim(), tel: valeur('newTel').trim(), service: valeur('newService').trim(), groupe: valeur('newGroupe'), photo: valeur('newPhoto') };
+        if (editId) { data.id = editId; if (!(await agir('membreModifier', data, '✅ Profil de ' + nom + ' mis à jour.'))) return; editId = null; }
+        else { const j = await agir('membreAjouter', data); if (!j) return; afficherCodes([{ nom: j.nom, code: j.code }], 'Nouveau membre : ' + j.nom); }
+        vider('newNom', 'newRole', 'newAnniv', 'newTel', 'newService', 'newPhoto', 'newPhotoFile');
+        document.getElementById('addMemberForm').style.display = 'none';
+    };
+    supprimerMembre = async function (id) { if (!confirm('Supprimer ce membre ?')) return; if (await agir('membreSupprimer', { id })) fermerProfil(); };
+    enregistrerRole = async function () {
+        if (await agir('roleDefinir', { id: roleCible, titre: valeur('roleTitre'), fonction: valeur('roleFonction') }, '👑 Titre et rôle enregistrés.')) fermerProfil();
+    };
+    enregistrerNomFamille = async function () { await agir('nomFamille', { nom: valeur('inputNomFamille') }, '✅ Le nom de la famille est enregistré pour tous ❤️'); };
+
+    // ----- événements
+    ajouterEvenement = async function () {
+        const d = { titre: valeur('eventTitre').trim(), date: valeur('eventDate').trim(), desc: valeur('eventDesc').trim(), montant: valeur('eventMontant'), collecteur: valeur('eventCollecteur'), visio: !!(document.getElementById('eventVisio') || {}).checked };
+        if (!d.titre || !d.date) return toast('Veuillez remplir le titre et la date !');
+        const edit = !!editEvtId; if (edit) d.id = editEvtId;
+        if (!(await agir(edit ? 'evtModifier' : 'evtCreer', d, edit ? '✅ Événement modifié.' : '✅ Événement ajouté au calendrier de la famille !'))) return;
+        editEvtId = null; vider('eventTitre', 'eventDate', 'eventDesc', 'eventMontant'); const v = document.getElementById('eventVisio'); if (v) v.checked = false;
+        document.getElementById('addEventForm').style.display = 'none';
+    };
+    supprimerEvenement = async function (id) { if (confirm('Supprimer cet événement ?')) await agir('evtSupprimer', { id }); };
+    activerVisio = function (id) { return agir('evtVisio', { id }, '📹 Visioconférence activée pour cet événement.'); };
+    participer = async function (id) {
+        if (!exigeSession()) return;
+        const j = await agir('evtParticiper', { id }); if (!j) return;
+        const e = evenements.find(x => x.id === id), oui = e && e.rsvp[session.cle] && e.rsvp[session.cle].oui; toast(oui ? '✅ Présence confirmée, merci !' : 'Présence annulée.');
+    };
+    enregistrerCR = function (id) { return agir('evtCR', { id, texte: valeur('cr-' + id) }, '📝 Compte rendu enregistré.'); };
+    ouvrirCotisation = function (id) { return agir('cotOuvrir', { id, montant: valeur('cm-' + id), collecteur: valeur('cc-' + id) }, '💰 Cotisation ouverte.'); };
+    enregistrerVersement = function (id) { return agir('cotVersement', { id, membreId: valeur('vm-' + id), montant: valeur('vv-' + id) }, '✅ Versement enregistré.'); };
+    supprimerVersement = async function (id, ts) { if (confirm('Annuler ce versement ?')) await agir('cotAnnuler', { id, ts }); };
+    basculerListe = async function (id, g) {
+        if (!(await agir('cotVisibilite', { id, groupe: g }))) return;
+        const e = evenements.find(x => x.id === id); toast(e && e.cot.visible[g] ? '👁 Liste ' + nomGroupe[g] + ' affichée à la famille.' : '🙈 Liste ' + nomGroupe[g] + ' masquée pour les autres membres.');
+    };
+
+    // ----- caisse
+    validerCotisationTresorier = async function () {
+        const m = membres.find(x => norm(x.nom) === norm(valeur('tresorierMembre'))); if (!m) return toast('Membre introuvable : écrivez son nom complet.');
+        if (await agir('caisseCotisation', { membreId: m.id, montant: valeur('tresorierMontant') }, '✅ Cotisation enregistrée pour ' + m.nom + '.')) vider('tresorierMembre', 'tresorierMontant');
+    };
+    enregistrerDepense = async function () {
+        if (await agir('caisseDepense', { libelle: valeur('depenseLibelle'), montant: valeur('depenseMontant') }, '✅ Dépense enregistrée.')) vider('depenseLibelle', 'depenseMontant');
+    };
+    demanderAnnulation = async function (opId) {
+        if (await agir('annulDemander', { opId, motif: valeur('motifAnnul') }, 'Demande envoyée : encore ' + (QUORUM - 1) + ' approbations du bureau nécessaires.')) vider('motifAnnul');
+    };
+    approuverAnnulation = async function (id) {
+        if (!(await agir('annulApprouver', { id }))) return;
+        const a = annulations.find(x => x.id === id); toast(a && a.statut === 'appliquee' ? '✅ Annulation appliquée (3 approbations).' : '✅ Approbation enregistrée (' + (a ? Object.keys(a.approbations).length : '?') + '/' + QUORUM + ').');
+    };
+    retirerAnnulation = function (id) { return agir('annulRetirer', { id }, 'Demande retirée.'); };
+
+    // ----- messages, annonces, suggestions
+    partagerMessage = async function () {
+        if (!exigeSession()) return;
+        const texte = valeur('texteMessage').trim(); if (!texte && !blobRec) return toast('Enregistrez un vocal ou écrivez un message.');
+        let audio = null;
+        if (blobRec) {
+            audio = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok({ mime: blobRec.type || 'audio/webm', b64: String(r.result).split(',')[1] }); r.onerror = ko; r.readAsDataURL(blobRec); });
+        }
+        if (!(await agir('msgPublier', { texte, audio }, 'Message partagé avec la famille ❤️'))) return;
+        blobRec = null; vider('texteMessage'); const a = document.getElementById('apercu'); a.hidden = true; a.removeAttribute('src');
+        document.getElementById('recEtat').textContent = 'Appuyez pour enregistrer un vocal (3 min max)'; switchView('voicesView');
+    };
+    repondre = async function (id) { const t = valeur('rep-' + id).trim(); if (t) await agir('msgRepondre', { id, texte: t }); };
+    supprimerMessage = async function (id) { if (confirm('Supprimer ce message ?')) await agir('msgSupprimer', { id }); };
+    publierAnnonce = async function () { if (await agir('annoncePublier', { texte: valeur('texteAnnonce') }, '✅ Publié sur l’accueil pour toute la famille.')) vider('texteAnnonce'); };
+    envoyerSuggestionEcrite = async function () { if (await agir('suggestionEnvoyer', { texte: valeur('texteSuggestion') }, 'Votre suggestion a été transmise au Président ❤️')) vider('texteSuggestion'); };
+
+    // ----- sondages et élections
+    creerSondage = async function () {
+        const options = valeur('sondageOpts').split(String.fromCharCode(10));
+        if (await agir('sondageCreer', { q: valeur('sondageQ'), options }, '🗳️ Sondage publié.')) vider('sondageQ', 'sondageOpts');
+    };
+    creerElection = async function () {
+        const cand = [...document.getElementById('electionCand').selectedOptions].map(o => Number(o.value));
+        if (await agir('electionCreer', { poste: valeur('electionPoste'), cand }, '🏛️ Élection lancée.')) vider('electionPoste');
+    };
+    voter = async function (id, i) { if (!exigeSession()) return; if (await agir('voter', { id, i })) toast('✅ Votre vote est enregistré.'); };
+    cloreSondage = function (id) { return agir('sondageClore', { id }, 'Sondage clos.'); };
+    supprimerSondage = async function (id) { if (confirm('Supprimer ce sondage ?')) await agir('sondageSupprimer', { id }); };
+    nommerElu = function (id) {
+        const x = sondages.find(s => s.id === id);
+        return agir('nommerElu', { id, fonction: valeur('nf-' + id) }, '👑 Nomination effectuée' + (x ? ' : ' + x.poste : '') + '.');
+    };
+    </script>
 </body>
 </html>
