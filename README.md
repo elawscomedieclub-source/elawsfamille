@@ -89,17 +89,39 @@ Les notifications fonctionnent à l'ouverture de l'application (pas de notificat
 Le bureau publie une question avec 2 à 6 choix (menu « 🗳️ Sondages »). Chaque membre connecté vote une fois et peut
 changer son vote jusqu'à la clôture. Les résultats s'affichent en pourcentages, sans les noms.
 
+## Fichiers _headers et vercel.json
+Sur Vercel, c'est `vercel.json` qui s'applique (même rôle que `_headers`, utilisé par Netlify et Cloudflare Pages).
+
 ## Fichier _headers
 Sur Netlify ou Cloudflare Pages, le fichier `_headers` ajoute des protections (interdiction d'intégrer le site dans
 un autre site, pas de détection de type de fichier) et empêche la mise en cache du fichier `sw.js`. Sur un autre
 hébergeur, il peut être ignoré sans conséquence.
 
+## Bureau, postes, codes et élections
+- **Qui peut quoi** : seuls les membres du bureau (tout membre ayant un poste) et l'administrateur ajoutent des membres,
+  modifient le nom de la famille (partagé entre tous les appareils), créent des événements et des sondages.
+- **Codes provisoires** : quand le bureau ou l'administrateur ajoute un membre, un code provisoire de 8 caractères
+  s'affiche une seule fois. Le membre se connecte avec, puis doit choisir son propre code (6 caractères minimum)
+  avant de continuer. Le bureau peut redonner un code provisoire à un membre simple (fiche du membre > « 🔑 Code
+  provisoire ») ; seul l'administrateur le fait pour un membre du bureau.
+  L'administrateur dispose aussi de « Générer les codes provisoires manquants » (à utiliser une fois pour les membres
+  d'exemple ou existants : aucun membre ne peut plus créer lui-même son code).
+- **Titres et rôles** : seul l'administrateur donne un titre (texte libre : Vice-président, Conseiller…) et un rôle
+  (membre simple, membre du bureau, Secrétaire, Trésorier, Président) depuis la fiche du membre. Il peut les modifier
+  ou les retirer à tout moment.
+- **Élections** : le bureau ouvre une élection (Sondages > « Ouvrir une élection ») avec le poste et 2 à 8 candidats.
+  Tous les membres votent (l'administrateur, qui n'est pas un membre, ne vote pas). Après la clôture, l'administrateur
+  nomme l'élu(e) en lui donnant son rôle ; en cas d'égalité, il faut relancer une élection.
+- **Limite honnête** : tout est contrôlé dans l'application (pas de serveur de comptes). Cela protège contre les
+  accès ordinaires, pas contre une personne technique de la famille qui voudrait contourner le système.
+
 ## Premiers pas après la mise en ligne
 1. Connectez-vous en « Administrateur » (ajoutez ?admin à l'adresse) : le premier code saisi est conservé.
-2. Connectez-vous en « Président », « Trésorier », « Secrétaire » : chacun crée son code à la première connexion.
+2. Dans l'espace administrateur, cliquez « Générer les codes provisoires manquants », notez les codes et remettez-les
+   à chaque membre : chacun choisit ensuite son propre code à sa première connexion.
 3. Remplacez les membres d'exemple par les vrais (Annuaire), puis activez la synchronisation (section 2).
 
 ## Fonctionnement
 - Fusion automatique (plus de « dernier qui écrit écrase tout ») : les ajouts de chacun sont conservés ; les suppressions sont propagées.
 - Les caisses (cotisations/dépenses) : en cas de modification simultanée, la plus récente l'emporte.
-- Les codes personnels (connexion) restent propres à chaque appareil.
+- Les codes personnels (connexion) sont maintenant synchronisés (sous forme chiffrée) entre les appareils.

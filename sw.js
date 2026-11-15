@@ -1,4 +1,4 @@
-const CACHE_NAME = 'famille-app-v13';
+const CACHE_NAME = 'famille-app-v14';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {

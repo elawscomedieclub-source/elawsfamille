@@ -927,7 +927,7 @@
             <div id="aideView" class="view">
                 <h2 style="font-size: 1.25rem; margin-bottom: 6px; color: #14532d;">❓ Guide d’utilisation</h2>
                 <p style="font-size: 0.9rem; color: #4d7c0f; margin-bottom: 18px;">Tout ce qu’il faut savoir pour profiter de l’application en famille.</p>
-                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🔑 Se connecter</summary><p style="margin-top:8px;font-size:.9rem">Écrivez votre nom complet (ou votre fonction : Président, Trésorier, Secrétaire) et choisissez un code secret d’au moins 4 caractères à la première connexion. Vous pouvez le changer dans « Mon Profil ». Code oublié : demandez au bureau de réinitialiser les codes.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🔑 Se connecter</summary><p style="margin-top:8px;font-size:.9rem">Écrivez votre nom complet (ou votre fonction : Président, Trésorier, Secrétaire) et le code provisoire que le bureau ou l’administrateur vous a remis. À la première connexion, choisissez votre propre code secret (6 caractères minimum). Vous pourrez le changer à tout moment dans « Mon Profil ». Code oublié : demandez un nouveau code provisoire au bureau.</p></details>
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🎂 Annuaire et anniversaires</summary><p style="margin-top:8px;font-size:.9rem">Les anniversaires s’écrivent JJ/MM (ex : 15/11). Touchez un membre pour voir son profil, l’appeler ou lui écrire. Les numéros ne sont visibles que pour les personnes connectées. Le bureau ajoute et modifie les membres ; chacun peut modifier son propre profil.</p></details>
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">💌 Messages et vocaux</summary><p style="margin-top:8px;font-size:.9rem">Enregistrez un vocal de 3 minutes au maximum ou écrivez un message, puis partagez-le avec la famille. Chacun peut répondre et supprimer ses propres messages.</p></details>
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">💰 Cotisations</summary><p style="margin-top:8px;font-size:.9rem">Le statut « À jour » repart à zéro chaque mois. Le Trésorier enregistre les cotisations et les dépenses de la caisse. Pour un événement, le bureau peut ouvrir une cotisation avec un collecteur, qui peut afficher ou masquer la liste des Aînés et celle des Jeunes.</p></details>
@@ -935,6 +935,7 @@
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">📲 Installer l’application</summary><p style="margin-top:8px;font-size:.9rem">Sur Android : touchez « Installer l’application ». Sur iPhone : bouton Partager puis « Sur l’écran d’accueil ». Elle s’ouvre ensuite comme une vraie application, même avec une mauvaise connexion.</p></details>
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🛡️ Erreur de caisse</summary><p style="margin-top:8px;font-size:.9rem">Le Trésorier indique le motif puis touche ↩ à côté de l’opération concernée. L’annulation n’est appliquée qu’après l’accord de 3 membres du bureau (la demande compte comme la première approbation). Chacun vote dans « Validations du bureau ». Le journal garde la trace de tout.</p></details>
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🗳️ Sondages</summary><p style="margin-top:8px;font-size:.9rem">Le bureau publie une question avec 2 à 6 choix. Chaque membre connecté vote une fois et peut changer d’avis tant que le sondage est ouvert. Les résultats s’affichent en pourcentages, sans les noms.</p></details>
+                    <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🏛️ Bureau, postes et élections</summary><p style="margin-top:8px;font-size:.9rem">Seuls les membres du bureau et l’administrateur ajoutent des membres, modifient le nom de la famille et organisent les événements. La famille élit ses responsables dans « Sondages » (élection) : tous les membres votent, puis l’administrateur nomme l’élu(e) et lui donne son titre et son rôle (Président, Secrétaire, Trésorier ou membre du bureau). L’administrateur peut aussi modifier ou retirer un titre depuis la fiche du membre.</p></details>
                     <details class="history-card" style="max-width:640px;margin-bottom:10px"><summary style="cursor:pointer;font-weight:700">🔒 Vos données</summary><p style="margin-top:8px;font-size:.9rem">Les informations restent sur votre appareil, ou sont partagées entre les membres grâce au code famille. Ne communiquez ce code qu’à la famille. Le bureau peut télécharger une sauvegarde depuis l’espace administrateur.</p></details>
             </div>
 
@@ -952,6 +953,13 @@
                     <div class="form-group"><label for="sondageQ">Question</label><input type="text" id="sondageQ" maxlength="140" placeholder="Ex : Quelle date pour la fête ?"></div>
                     <div class="form-group"><label for="sondageOpts">Choix (un par ligne, de 2 à 6)</label><textarea id="sondageOpts" rows="4" placeholder="28 décembre&#10;4 janvier"></textarea></div>
                     <button class="btn-primary" onclick="creerSondage()">Publier le sondage</button>
+                </div>
+                <div id="formElection" class="stat-card" style="display:none;max-width:520px;margin-bottom:22px">
+                    <h4 style="color:#14532d; margin-bottom:12px;">🏛️ Ouvrir une élection</h4>
+                    <div class="form-group"><label for="electionPoste">Poste à pourvoir</label><input type="text" id="electionPoste" maxlength="40" placeholder="Ex : Vice-président"></div>
+                    <div class="form-group"><label for="electionCand">Candidats (maintenez pour en choisir plusieurs)</label><select id="electionCand" multiple size="5" style="width:100%"></select></div>
+                    <button class="btn-primary" onclick="creerElection()">Lancer l’élection</button>
+                    <p style="font-size:.78rem;margin-top:8px">Tous les membres votent. Après la clôture, l’administrateur nomme l’élu(e) et lui donne son titre et son rôle.</p>
                 </div>
                 <div id="listeSondages" style="max-width:640px"></div>
             </div>
@@ -1020,6 +1028,13 @@
                     <div class="profil-modal-content">
                         <button class="profil-close" onclick="fermerProfil()">✕</button>
                         <div id="profilDetailBody"></div>
+                        <div id="blocRoleAdmin" style="display:none;margin-top:12px;border-top:1px dashed #bbf7d0;padding-top:12px;text-align:left">
+                            <strong style="font-size:.85rem">👑 Titre et rôle (administrateur)</strong>
+                            <input type="text" id="roleTitre" maxlength="40" placeholder="Titre : ex. Vice-président" aria-label="Titre" style="width:100%;margin:8px 0;padding:9px 12px;border:2px solid #bbf7d0;border-radius:12px">
+                            <select id="roleFonction" aria-label="Rôle" style="width:100%;padding:9px 12px;border:2px solid #bbf7d0;border-radius:12px"><option value="">Membre simple (hors bureau)</option><option value="bureau">Membre du bureau</option><option value="secretaire">Secrétaire</option><option value="tresorier">Trésorier</option><option value="president">Président</option></select>
+                            <button class="btn-primary" style="margin-top:10px" onclick="enregistrerRole()">Enregistrer le titre et le rôle</button>
+                        </div>
+                        <button id="btnCodeProv" class="btn-primary" style="display:none;background:#f59e0b;margin:10px auto 0">🔑 Code provisoire</button>
                         <button id="btnModifMembre" class="btn-primary" style="display:none;background:#3b82f6;margin:10px auto 0">✏️ Modifier ce profil</button>
                         <button id="btnSupprMembre" class="btn-primary" style="display:none;background:#dc2626;margin:10px auto 0;display:none">🗑 Supprimer ce membre</button>
                     </div>
@@ -1064,10 +1079,11 @@
                 <div class="stat-card" style="max-width:520px; margin-bottom:20px;">
                     <h4 style="color:#14532d; margin-bottom:12px;">📜 Historique de mes cotisations</h4>
                     <div id="histoCotis"></div>
+                    <div id="bandeauProv" class="history-card" style="display:none;border-left-color:#dc2626;max-width:520px;margin-top:22px"><h4>🔐 Code provisoire</h4><p>Vous êtes connecté avec un code provisoire donné par le bureau. Choisissez maintenant votre propre code secret ci-dessous : vous ne pourrez rien faire d’autre avant.</p></div>
                     <div class="stat-card" style="max-width:520px; margin-top:22px;">
                         <h4 style="color:#14532d; margin-bottom:12px;">🔐 Changer mon code secret</h4>
                         <div class="form-group"><label for="ancienCode">Ancien code</label><input type="password" id="ancienCode" autocomplete="current-password"></div>
-                        <div class="form-group"><label for="nouveauCode">Nouveau code (4 caractères minimum)</label><input type="password" id="nouveauCode" autocomplete="new-password"></div>
+                        <div class="form-group"><label for="nouveauCode">Nouveau code (6 caractères minimum)</label><input type="password" id="nouveauCode" autocomplete="new-password"></div>
                         <button class="btn-primary" onclick="changerCode()">Modifier mon code</button>
                     </div>
                 </div>
@@ -1229,6 +1245,7 @@
                         <button class="btn-primary" style="background:#dc2626" onclick="reinitialiserCodes()">🔑 Réinitialiser les codes membres</button>
                         <input type="file" id="fichierSauvegarde" accept=".json" style="display:none" onchange="restaurer(this)">
                         <button class="btn-primary" style="background:#3b82f6" onclick="document.getElementById('fichierSauvegarde').click()">📥 Restaurer une sauvegarde</button>
+                        <button class="btn-primary" style="background:#f59e0b" onclick="genererTousCodes()">🔑 Générer les codes provisoires manquants</button>
                     </div>
                 </div>
                 <button class="btn-primary" style="background: #7c3aed; margin-top: 15px;" onclick="switchView('homeView')">Retour à l'accueil</button>
@@ -1284,9 +1301,9 @@
         // ==================== SYNCHRONISATION FIREBASE (optionnelle) ====================
         // Collez ici la configuration Firebase (voir README.md). Laissez null pour rester en mode local.
         const FIREBASE_CONFIG = null;
-        const CLES_SYNC = ['membres', 'evenements', 'caisse', 'annonces', 'suggestions', 'messages', 'suppr', 'annulations', 'sondages'];
+        const CLES_SYNC = ['membres', 'evenements', 'caisse', 'annonces', 'suggestions', 'messages', 'suppr', 'annulations', 'sondages', 'comptes', 'reglages'];
         let docCloud = null, stockage = null, codeFamille = localStorage.getItem('codeFamille') || '', applique = false, minuteur = null, dernier = '';
-        const etatLocal = () => ({ membres, evenements, caisse, annonces, suggestions, messages, suppr, annulations, sondages });
+        const etatLocal = () => ({ membres, evenements, caisse, annonces, suggestions, messages, suppr, annulations, sondages, comptes, reglages });
         const chargerScript = src => new Promise((ok, ko) => { const x = document.createElement('script'); x.src = src; x.onload = ok; x.onerror = ko; document.head.appendChild(x); });
         function majTicker() {
             const t = document.querySelector('.ticker-text'); if (!t) return;
@@ -1327,11 +1344,12 @@
             });
             const caisseB = b.caisse && (b.caisse.maj || 0) > ((a.caisse || {}).maj || 0);
             return { membres: uni('m', x => x.id, a.membres, b.membres), evenements: evs, messages: msgs,
-                annonces: uni(null, cle2, a.annonces, b.annonces), suggestions: uni(null, cle2, a.suggestions, b.suggestions), caisse: caisseB ? b.caisse : a.caisse, suppr: sup, annulations: fusionAnn(a.annulations, b.annulations), sondages: fusionSond(a.sondages, b.sondages, sup) };
+                annonces: uni(null, cle2, a.annonces, b.annonces), suggestions: uni(null, cle2, a.suggestions, b.suggestions), caisse: caisseB ? b.caisse : a.caisse, suppr: sup, annulations: fusionAnn(a.annulations, b.annulations), sondages: fusionSond(a.sondages, b.sondages, sup), comptes: fusionComptes(a.comptes, b.comptes), reglages: ((b.reglages || {}).maj || 0) > ((a.reglages || {}).maj || 0) ? b.reglages : (a.reglages || reglages) };
         }
         function appliquerEtat(f) {
             applique = true;
-            membres = f.membres; evenements = f.evenements; messages = f.messages; annonces = f.annonces; suggestions = f.suggestions; caisse = f.caisse; suppr = f.suppr; annulations = f.annulations || annulations; sondages = f.sondages || sondages;
+            membres = f.membres; evenements = f.evenements; messages = f.messages; annonces = f.annonces; suggestions = f.suggestions; caisse = f.caisse; suppr = f.suppr; annulations = f.annulations || annulations; sondages = f.sondages || sondages; comptes = f.comptes || comptes;
+            if (f.reglages && f.reglages.nom) { reglages = f.reglages; localStorage.setItem('nomFamille', reglages.nom); if (typeof appliquerNomFamille === 'function') appliquerNomFamille(reglages.nom); }
             CLES_SYNC.forEach(k => ecrire(k, etatLocal()[k]));
             applique = false;
             rafraichirDonnees();
@@ -1418,7 +1436,7 @@
             t.textContent = msg; t.classList.add('show');
             clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 3800);
         }
-        let comptes = lire('comptes', {}), suggestions = lire('suggestions', []), annonces = lire('annonces', []);
+        let reglages = lire('reglages', { nom: null, maj: 0 }), comptes = lire('comptes', {}), suggestions = lire('suggestions', []), annonces = lire('annonces', []);
         let caisse = lire('caisse', { recu: 280000, depenses: 150000 }), suppr = lire('suppr', []), annulations = lire('annulations', []), sondages = lire('sondages', []);
         let session = null; try { session = JSON.parse(sessionStorage.getItem('session')); } catch (e) {}
         const essais = {}, verrou = {};
@@ -1427,7 +1445,9 @@
             const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
             return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
         }
+        const FONCTIONS = ['president', 'secretaire', 'tresorier', 'bureau'];
         function fonctions(m) {
+            if (m.fonction !== undefined) return FONCTIONS.includes(m.fonction) ? [m.fonction] : [];
             const r = norm(m.role), f = [];
             if (r.includes('president') && !r.includes('vice')) f.push('president');
             if (r.includes('secretaire')) f.push('secretaire');
@@ -1438,13 +1458,13 @@
             const n = norm(saisie);
             if (n === 'admin' || n === 'administrateur') return { cle: 'admin', nom: 'Administrateur', perms: ['admin'] };
             const m = membres.find(x => norm(x.nom) === n) || membres.find(x => fonctions(x).includes(n));
-            return m ? { cle: String(m.id), nom: m.nom, perms: ['membre', ...fonctions(m)] } : null;
+            return m ? { cle: String(m.id), nom: m.nom, perms: ['membre', ...fonctions(m), ...(fonctions(m).length ? ['bureau'] : [])] } : null;
         }
         function aRole(r) {
             if (!session) return false;
             const p = session.perms;
             if (p.includes('admin') || p.includes('president')) return true;
-            return r === 'bureau' ? p.includes('secretaire') : p.includes(r);
+            return p.includes(r);
         }
         function peutVoir(v) {
             const need = { secretaireView: 'secretaire', tresorierView: 'tresorier', presidentView: 'president', adminView: 'admin' };
@@ -1454,6 +1474,9 @@
             return !need[v] || aRole(need[v]);
         }
         function appliquerSession() {
+            const nr = document.getElementById('newRole'); if (nr) { nr.disabled = !estAdmin(); nr.title = estAdmin() ? '' : 'Le titre est attribué par l’administrateur'; }
+            document.querySelectorAll('button[onclick*="addMemberForm"],button[onclick*="addEventForm"]').forEach(b => { b.style.display = aRole('bureau') ? '' : 'none'; });
+            const ni = document.getElementById('inputNomFamille'); if (ni) { ni.disabled = !aRole('bureau'); const nb = ni.parentElement.parentElement.querySelector('button[onclick*="enregistrerNomFamille"]'); if (nb) nb.disabled = !aRole('bureau'); }
             document.getElementById('userRoleDisplay').textContent = session ? 'Connecté : ' + session.nom + ' 🌿' : 'Mode Public 🌿';
             const n = document.getElementById('navLogout'); if (n) n.style.display = session ? 'flex' : 'none';
             majStats(); majApprobations(); majSondages(); rappels();
@@ -1471,6 +1494,7 @@
             document.getElementById('annoncesAccueil').innerHTML = annonces.map(a => `<div class="history-card"><h4>📢 Annonce</h4><p>${esc(a.texte)}</p><span class="history-date">${esc(a.date)} • ${esc(a.de)}</span></div>`).join('');
         }
         function majEspaceMembre() {
+            document.getElementById('bandeauProv').style.display = session && session.prov ? 'block' : 'none';
             const m = session && membres.find(x => String(x.id) === session.cle);
             const ok = m && m.cotisation === 'À jour';
             document.getElementById('statCotis').textContent = m ? (ok ? '✅ À jour' : '⚠️ En retard') : '—';
@@ -1503,10 +1527,10 @@
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sauvegarde_famille.json'; a.click(); URL.revokeObjectURL(a.href);
         }
         function reinitialiserCodes() {
-            if (!session || !session.perms.includes('admin')) return;
-            if (!confirm('Chaque membre devra recréer son code à sa prochaine connexion. Continuer ?')) return;
-            Object.keys(comptes).forEach(k => { if (k !== 'admin') delete comptes[k]; });
-            ecrire('comptes', comptes); toast('Codes réinitialisés.');
+            if (!estAdmin()) return;
+            if (!confirm('Tous les codes des membres seront supprimés. Vous devrez ensuite générer de nouveaux codes provisoires. Continuer ?')) return;
+            Object.keys(comptes).forEach(k => { if (k !== 'admin') comptes[k] = { revoque: true, ts: Date.now() }; });
+            ecrire('comptes', comptes); toast('Codes supprimés. Générez les codes provisoires.');
         }
         document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerProfil(); });
 
@@ -1751,10 +1775,11 @@
         async function changerCode() {
             if (!session) return;
             const a = document.getElementById('ancienCode').value, n = document.getElementById('nouveauCode').value, c = comptes[session.cle];
-            if (!c || await hacher(c.sel + a) !== c.hash) return toast('Ancien code incorrect.');
-            if (n.length < 4) return toast('Nouveau code : 4 caractères minimum.');
-            const sel = Math.random().toString(36).slice(2);
-            comptes[session.cle] = { sel, hash: await hacher(sel + n) }; ecrire('comptes', comptes);
+            if (!c || c.revoque || await calculerHash(c.sel, a, c.alg) !== c.hash) return toast('Ancien code incorrect.');
+            if (n.length < 6) return toast('Nouveau code : 6 caractères minimum.');
+            if (n === a) return toast('Choisissez un code différent de l’ancien.');
+            await definirCode(session.cle, n, false);
+            session.prov = false; sessionStorage.setItem('session', JSON.stringify(session)); majEspaceMembre();
             document.getElementById('ancienCode').value = ''; document.getElementById('nouveauCode').value = ''; toast('✅ Code modifié.');
         }
         function restaurer(inp) {
@@ -1765,7 +1790,7 @@
                     const d = JSON.parse(r.result);
                     if (!Array.isArray(d.membres) || !Array.isArray(d.evenements)) throw new Error('format');
                     if (!confirm('Remplacer les données actuelles par cette sauvegarde ?')) return;
-                    appliquerEtat({ membres: d.membres, evenements: d.evenements, messages: d.messages || [], annonces: d.annonces || [], suggestions: d.suggestions || [], caisse: d.caisse || caisse, suppr: d.suppr || [], annulations: d.annulations || [], sondages: d.sondages || [] });
+                    appliquerEtat({ membres: d.membres, evenements: d.evenements, messages: d.messages || [], annonces: d.annonces || [], suggestions: d.suggestions || [], caisse: d.caisse || caisse, suppr: d.suppr || [], annulations: d.annulations || [], sondages: d.sondages || [], comptes: d.comptes || comptes, reglages: d.reglages || reglages });
                     pousser(); toast('✅ Sauvegarde restaurée.');
                 } catch (e) { toast('Fichier de sauvegarde invalide.'); }
                 inp.value = '';
@@ -1804,7 +1829,8 @@
 
         // ==================== ANNULATIONS DE CAISSE (3 APPROBATIONS) & COMPTES RENDUS ====================
         const QUORUM = 3;
-        const estBureau = () => !!session && ['president', 'secretaire', 'tresorier'].some(r => session.perms.includes(r));
+        const estBureau = () => !!session && session.perms.includes('bureau');
+        const estAdmin = () => !!session && session.perms.includes('admin');
         function fusionAnn(xs, ys) {
             const rang = { attente: 0, retiree: 1, appliquee: 2 }, map = new Map();
             [...(ys || []), ...(xs || [])].forEach(x => {
@@ -1885,7 +1911,7 @@
                 const p = map.get(x.id);
                 if (!p) { map.set(x.id, { ...x, votes: { ...x.votes } }); return; }
                 const v = { ...p.votes }; Object.entries(x.votes || {}).forEach(([k, o]) => { if (!v[k] || o.ts >= v[k].ts) v[k] = o; });
-                map.set(x.id, { ...p, votes: v, clos: !!(p.clos || x.clos), maj: Math.max(p.maj || 0, x.maj || 0) });
+                map.set(x.id, { ...p, votes: v, nomme: !!(p.nomme || x.nomme), clos: !!(p.clos || x.clos), maj: Math.max(p.maj || 0, x.maj || 0) });
             });
             return [...map.values()].filter(x => !(sup || []).includes('sd:' + x.id));
         }
@@ -1903,6 +1929,7 @@
         function voter(id, i) {
             if (!session) { toast('🔒 Connectez-vous pour voter.'); return switchView('loginView'); }
             const x = sondages.find(s => s.id === id); if (!x || x.clos) return toast('Ce sondage est clos.');
+            if (x.type === 'election' && !session.perms.includes('membre')) return toast('Seuls les membres de la famille votent aux élections.');
             x.votes[session.cle] = { o: i, nom: session.nom, ts: Date.now() }; x.maj = Date.now();
             ecrire('sondages', sondages); majSondages(); rappels(); toast('✅ Votre vote est enregistré.');
         }
@@ -1917,6 +1944,11 @@
         }
         function majSondages() {
             const f = document.getElementById('formSondage'); if (f) f.style.display = aRole('bureau') ? 'block' : 'none';
+            const fe = document.getElementById('formElection'); if (fe) {
+                fe.style.display = aRole('bureau') ? 'block' : 'none';
+                const sel = document.getElementById('electionCand');
+                if (sel.options.length !== membres.length) sel.innerHTML = [...membres].sort((a, b) => a.nom.localeCompare(b.nom, 'fr')).map(m => `<option value="${m.id}">${esc(m.nom)}</option>`).join('');
+            }
             const el = document.getElementById('listeSondages'); if (!el) return;
             el.innerHTML = sondages.length ? sondages.map(x => {
                 const total = Object.keys(x.votes).length, moi = session && x.votes[session.cle];
@@ -1925,8 +1957,87 @@
                     return `<button ${x.clos ? 'disabled' : ''} onclick="voter(${x.id},${i})" style="display:block;width:100%;text-align:left;margin-top:8px;padding:10px 14px;border:2px solid ${choisi ? '#16a34a' : '#bbf7d0'};border-radius:12px;cursor:pointer;font-size:.9rem;background:linear-gradient(90deg,rgba(134,239,172,.55) ${pct}%,transparent ${pct}%)">${choisi ? '✅ ' : ''}${esc(t)} <strong style="float:right">${pct}% (${n})</strong></button>`;
                 }).join('');
                 const outils = aRole('bureau') ? `<div style="margin-top:10px">${x.clos ? '' : `<button class="btn-primary" style="padding:5px 12px;font-size:.75rem;background:#6366f1" onclick="cloreSondage(${x.id})">Clore</button> `}<button class="btn-primary" style="padding:5px 12px;font-size:.75rem;background:#94a3b8" onclick="supprimerSondage(${x.id})">🗑 Supprimer</button></div>` : '';
-                return `<div class="history-card" style="${x.clos ? 'opacity:.75' : ''}"><h4>${esc(x.q)}</h4><span class="history-date">${esc(x.date)} • ${esc(x.auteur)} • ${total} vote${total > 1 ? 's' : ''} ${x.clos ? '• 🔒 clos' : ''}</span>${lignes}${outils}</div>`;
+                let elu = '';
+                if (x.type === 'election' && x.clos) {
+                    const nv = x.options.map((t, i) => Object.values(x.votes).filter(v => v.o === i).length), mx = Math.max(...nv), gag = nv.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
+                    if (!total) elu = '<p style="margin-top:10px">Aucun vote exprimé.</p>';
+                    else if (gag.length > 1) elu = `<p style="margin-top:10px">⚖️ Égalité entre ${gag.map(i => esc(x.options[i])).join(' et ')} : relancez une élection.</p>`;
+                    else elu = `<p style="margin-top:10px">🏆 <strong>Élu(e) : ${esc(x.options[gag[0]])}</strong> — poste : ${esc(x.poste)}</p>` + (x.nomme ? '<p style="font-size:.82rem">✅ Nomination effectuée par l’administrateur.</p>' : estAdmin() ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><select id="nf-${x.id}" aria-label="Rôle" style="padding:8px;border:2px solid #bbf7d0;border-radius:10px"><option value="bureau">Membre du bureau</option><option value="secretaire">Secrétaire</option><option value="tresorier">Trésorier</option><option value="president">Président</option><option value="">Membre simple</option></select><button class="btn-primary" style="padding:6px 14px;font-size:.8rem" onclick="nommerElu(${x.id})">👑 Nommer (titre : ${esc(x.poste)})</button></div>` : '<p style="font-size:.82rem">En attente de la nomination par l’administrateur.</p>');
+                }
+                return `<div class="history-card" style="${x.clos ? 'opacity:.75' : ''}"><h4>${esc(x.q)}</h4><span class="history-date">${esc(x.date)} • ${esc(x.auteur)} • ${total} vote${total > 1 ? 's' : ''} ${x.clos ? '• 🔒 clos' : ''}</span>${lignes}${elu}${outils}</div>`;
             }).join('') : '<p>Aucun sondage pour le moment.</p>';
+        }
+
+        // ==================== CODES PROVISOIRES, TITRES & ÉLECTIONS ====================
+        let roleCible = null;
+        const aleatoire = n => { const a = new Uint8Array(n); (window.crypto || { getRandomValues: x => x.forEach((_, i) => { x[i] = Math.floor(Math.random() * 256); }) }).getRandomValues(a); return a; };
+        const codeAleatoire = () => [...aleatoire(8)].map(x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join('');
+        async function calculerHash(sel, code, alg) {
+            if (alg === 'p2' && window.crypto && crypto.subtle) {
+                const cle = await crypto.subtle.importKey('raw', new TextEncoder().encode(code), 'PBKDF2', false, ['deriveBits']);
+                const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(sel), iterations: 150000 }, cle, 256);
+                return [...new Uint8Array(bits)].map(x => x.toString(16).padStart(2, '0')).join('');
+            }
+            return hacher(sel + code);
+        }
+        async function definirCode(cle, code, prov) {
+            const sel = [...aleatoire(12)].map(x => x.toString(16).padStart(2, '0')).join(''), alg = (window.crypto && crypto.subtle) ? 'p2' : 'v1';
+            comptes[cle] = { sel, alg, hash: await calculerHash(sel, code, alg), prov: !!prov, ts: Date.now() };
+            ecrire('comptes', comptes);
+        }
+        function fusionComptes(xs, ys) {
+            const o = { ...(ys || {}) };
+            Object.entries(xs || {}).forEach(([k, v]) => { if (!o[k] || (v.ts || 0) >= (o[k].ts || 0)) o[k] = v; });
+            return o;
+        }
+        function afficherCodes(lignes, titre) {
+            const ancien = document.getElementById('overlayCodes'); if (ancien) ancien.remove();
+            const o = document.createElement('div'); o.id = 'overlayCodes'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true');
+            o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:6000;display:flex;align-items:center;justify-content:center;padding:16px';
+            o.innerHTML = `<div style="background:#fff;color:#14532d;border-radius:18px;padding:22px;max-width:420px;width:100%;max-height:85dvh;overflow:auto"><h3 style="margin-bottom:10px">${esc(titre)}</h3><p style="font-size:.85rem;margin-bottom:12px">Notez ou copiez ces codes maintenant : ils ne seront plus affichés. Chaque membre devra choisir son propre code à sa première connexion.</p>${lignes.map(l => `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed #bbf7d0"><span>${esc(l.nom)}</span><strong style="font-family:monospace;font-size:1.05rem">${esc(l.code)}</strong></div>`).join('')}<div style="display:flex;gap:10px;margin-top:16px"><button class="btn-primary" id="btnCopierCodes">📋 Copier</button><button class="btn-primary" style="background:#94a3b8" onclick="document.getElementById('overlayCodes').remove()">Fermer</button></div></div>`;
+            document.body.appendChild(o);
+            document.getElementById('btnCopierCodes').onclick = () => {
+                const t = lignes.map(l => l.nom + ' : ' + l.code).join(String.fromCharCode(10));
+                (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject(new Error('x'))).then(() => toast('Copié.')).catch(() => toast('Copie impossible : notez les codes.'));
+            };
+        }
+        async function genererCodeProvisoire(id) {
+            const m = membres.find(x => x.id === id); if (!m) return;
+            if (!estAdmin() && !(aRole('bureau') && !fonctions(m).length)) return toast('🔒 Seul l’administrateur peut réinitialiser le code d’un membre du bureau.');
+            const code = codeAleatoire(); await definirCode(String(id), code, true);
+            afficherCodes([{ nom: m.nom, code }], 'Code provisoire de ' + m.nom);
+        }
+        async function genererTousCodes() {
+            if (!estAdmin()) return toast('🔒 Réservé à l’administrateur.');
+            const lignes = [];
+            for (const m of membres) { const c = comptes[String(m.id)]; if (!c || c.revoque) { const code = codeAleatoire(); await definirCode(String(m.id), code, true); lignes.push({ nom: m.nom, code }); } }
+            if (!lignes.length) return toast('Tous les membres ont déjà un compte actif.');
+            afficherCodes(lignes, 'Codes provisoires');
+        }
+        function enregistrerRole() {
+            if (!estAdmin()) return toast('🔒 Seul l’administrateur attribue les titres et les rôles.');
+            const m = membres.find(x => x.id === roleCible); if (!m) return;
+            m.role = document.getElementById('roleTitre').value.trim() || 'Membre'; m.fonction = document.getElementById('roleFonction').value; m.maj = Date.now();
+            saveAll(); fermerProfil(); appliquerSession(); toast('👑 Titre et rôle enregistrés pour ' + m.nom + '.');
+        }
+        function creerElection() {
+            if (!aRole('bureau')) return toast('🔒 Réservé au bureau.');
+            const poste = document.getElementById('electionPoste').value.trim();
+            const ids = [...document.getElementById('electionCand').selectedOptions].map(o => Number(o.value));
+            if (!poste) return toast('Indiquez le poste à pourvoir.');
+            if (ids.length < 2 || ids.length > 8) return toast('Choisissez de 2 à 8 candidats.');
+            const cands = ids.map(i => membres.find(m => m.id === i)).filter(Boolean);
+            sondages.unshift({ id: Date.now(), type: 'election', poste, q: '🏛️ Élection : ' + poste, options: cands.map(m => m.nom), cand: cands.map(m => m.id), auteur: session.nom, date: new Date().toLocaleDateString('fr-FR'), clos: false, maj: Date.now(), votes: {} });
+            ecrire('sondages', sondages); document.getElementById('electionPoste').value = ''; majSondages(); rappels(); toast('🏛️ Élection lancée.');
+        }
+        function nommerElu(id) {
+            if (!estAdmin()) return toast('🔒 Seul l’administrateur nomme les élus.');
+            const x = sondages.find(s => s.id === id); if (!x || !x.clos || x.nomme) return;
+            const nv = x.options.map((t, i) => Object.values(x.votes).filter(v => v.o === i).length), mx = Math.max(...nv), gag = nv.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
+            if (gag.length !== 1 || !mx) return toast('Pas de vainqueur unique.');
+            const m = membres.find(k => k.id === x.cand[gag[0]]); if (!m) return toast('Membre introuvable.');
+            m.role = x.poste; m.fonction = document.getElementById('nf-' + id).value; m.maj = Date.now();
+            x.nomme = true; x.maj = Date.now(); saveAll(); ecrire('sondages', sondages); appliquerSession(); majSondages(); toast('👑 ' + m.nom + ' est nommé(e) : ' + x.poste + '.');
         }
 
         function toggleMobileMenu() {
@@ -1936,6 +2047,7 @@
 
         function switchView(viewId, element) {
             if (!peutVoir(viewId)) { toast('🔒 Espace réservé. Connectez-vous avec votre compte.'); viewId = 'loginView'; }
+            if (session && session.prov && !['espaceMembreView', 'loginView'].includes(viewId)) { toast('🔐 Choisissez d’abord votre propre code secret.'); viewId = 'espaceMembreView'; }
             if (viewId === 'voicesView') marquerVus();
             const views = document.querySelectorAll('.view');
             views.forEach(v => v.classList.remove('active'));
@@ -1954,26 +2066,25 @@
             if (!c) return toast('Nom inconnu. Écrivez votre nom complet (ex : Jean KODJO).');
             if (Date.now() < (verrou[c.cle] || 0)) return toast('Trop d’essais. Réessayez dans 30 secondes.');
             let cpt = comptes[c.cle];
-            if (!cpt) {
-                if (code.length < 4) return toast('Choisissez un code d’au moins 4 caractères.');
-                const sel = Math.random().toString(36).slice(2);
-                cpt = comptes[c.cle] = { sel, hash: await hacher(sel + code) };
-                ecrire('comptes', comptes);
-                toast('✅ Code créé. Gardez-le précieusement.');
-            } else if (await hacher(cpt.sel + code) !== cpt.hash) {
+            if (!cpt || cpt.revoque) {
+                if (c.cle !== 'admin') return toast('Votre compte n’est pas encore activé : demandez votre code provisoire au bureau ou à l’administrateur.');
+                if (code.length < 6) return toast('Choisissez un code d’au moins 6 caractères.');
+                await definirCode('admin', code, false);
+                cpt = comptes.admin; toast('✅ Code administrateur créé. Gardez-le précieusement.');
+            } else if (await calculerHash(cpt.sel, code, cpt.alg) !== cpt.hash) {
                 essais[c.cle] = (essais[c.cle] || 0) + 1;
                 if (essais[c.cle] >= 5) { verrou[c.cle] = Date.now() + 30000; essais[c.cle] = 0; }
                 return toast('Code incorrect.');
             }
-            session = { cle: c.cle, nom: c.nom, perms: c.perms };
+            session = { cle: c.cle, nom: c.nom, perms: c.perms, prov: !!cpt.prov };
             sessionStorage.setItem('session', JSON.stringify(session));
             document.getElementById('loginCode').value = '';
             appliquerSession();
             const p = c.perms;
-            const cible = p.includes('admin') ? 'adminView' : p.includes('president') ? 'presidentView' : p.includes('tresorier') ? 'tresorierView' : p.includes('secretaire') ? 'secretaireView' : 'espaceMembreView';
+            const cible = session.prov ? 'espaceMembreView' : p.includes('admin') ? 'adminView' : p.includes('president') ? 'presidentView' : p.includes('tresorier') ? 'tresorierView' : p.includes('secretaire') ? 'secretaireView' : 'espaceMembreView';
             document.getElementById('titreMembre').textContent = 'Carnet de : ' + c.nom;
             switchView(cible);
-            toast('Connexion réussie, bienvenue ' + c.nom + ' ❤️');
+            toast(session.prov ? '🔐 Code provisoire : choisissez maintenant votre propre code.' : 'Connexion réussie, bienvenue ' + c.nom + ' ❤️');
         }
 
         function envoyerSuggestionEcrite() {
@@ -2207,6 +2318,9 @@
             document.getElementById('profilDetail').style.display = 'flex';
             const bs = document.getElementById('btnSupprMembre'); bs.style.display = aRole('bureau') ? 'block' : 'none'; bs.onclick = () => supprimerMembre(m.id);
             const bm = document.getElementById('btnModifMembre'); bm.style.display = (aRole('bureau') || (session && session.cle === String(m.id))) ? 'block' : 'none'; bm.onclick = () => modifierMembre(m.id);
+            roleCible = m.id; document.getElementById('blocRoleAdmin').style.display = estAdmin() ? 'block' : 'none';
+            document.getElementById('roleTitre').value = m.role; document.getElementById('roleFonction').value = fonctions(m)[0] || '';
+            const bc = document.getElementById('btnCodeProv'); bc.style.display = (estAdmin() || (aRole('bureau') && !fonctions(m).length)) ? 'block' : 'none'; bc.onclick = () => genererCodeProvisoire(m.id);
         }
 
         function fermerProfil() {
@@ -2262,6 +2376,7 @@
             }
             if (!aRole('bureau')) { toast('🔒 Réservé au bureau de la famille.'); return; }
             localStorage.setItem('nomFamille', nom);
+            reglages = { nom, maj: Date.now() }; ecrire('reglages', reglages);
             appliquerNomFamille(nom);
 
             const fb = document.getElementById('nomFamilleFeedback');
@@ -2274,6 +2389,7 @@
         }
 
         function ouvrirModifNomFamille() {
+            if (!aRole('bureau')) return toast('🔒 Seuls le bureau et l’administrateur peuvent modifier le nom de la famille.');
             // Raccourci : cliquer sur le titre du menu ouvre les paramètres + focus
             switchView('parametresView');
             // Activer l'item de menu Paramètres
@@ -2476,9 +2592,10 @@
             const edition = !!editId;
             if (edition) {
                 const cible = membres.find(x => x.id === editId);
-                Object.assign(cible, { nom, role, anniv, tel, service, groupe, maj: Date.now() }); if (photo) cible.photo = photo; editId = null;
-            } else membres.push({ id: Date.now(), maj: Date.now(), nom, role, anniv, tel, service, cotisation: 'À jour', photo, groupe });
+                Object.assign(cible, { nom, role: estAdmin() ? role : cible.role, anniv, tel, service, groupe, maj: Date.now() }); if (photo) cible.photo = photo; editId = null;
+            } else membres.push({ id: Date.now(), maj: Date.now(), nom, role: estAdmin() ? role : 'Membre', anniv, tel, service, cotisation: 'À jour', photo, groupe });
             saveAll();
+            if (!edition) genererCodeProvisoire(membres[membres.length - 1].id);
 
             afficherMembres();
             actualiserAnniversaires();
